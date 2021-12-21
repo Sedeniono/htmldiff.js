@@ -37,6 +37,10 @@ function isWhitespace(char: string): boolean {
   return /^\s+$/.test(char);
 }
 
+function exhaustive(a: never): never {
+  return a;
+}
+
 
 const tagRegExp = /^\s*<([^!>][^>]*)>\s*$/;
 /**
@@ -95,7 +99,7 @@ function isEndOfAtomicTag(word: string, tag: string){
   return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 
-const styleTagsRegExp = /^<(strong|em)/;
+const styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s)(^(?!\w)|>)/;
 
 /**
  * Checks if the current word is the beginning of an style tag. An style tag is one whose
@@ -109,7 +113,7 @@ const styleTagsRegExp = /^<(strong|em)/;
  */
 
 function isStartOfStyleTag(word: string) {
-    var result = styleTagsRegExp.exec(word);
+    const result = styleTagsRegExp.exec(word);
     return result && result[1];
 }
 
@@ -205,6 +209,7 @@ function makeMatch(startInBefore: number, startInAfter: number, length: number, 
     segmentEndInAfter: startInAfter + length - 1
   };}
 
+type ParseMode = 'char' | 'tag' | 'atomic_tag' | 'style_tag' | 'html_comment' | 'whitespace';
 /**
  * Tokenizes a string of HTML.
  *
@@ -213,7 +218,7 @@ function makeMatch(startInBefore: number, startInAfter: number, length: number, 
  * @return {Array.<string>} The list of tokens.
  */
 export function htmlToTokens(html: string): Token[] {
-  let mode = 'char';
+  let mode: ParseMode = 'char';
   let currentWord = '';
   let currentAtomicTag = '';
   let currentStyleTag = '';
@@ -223,7 +228,7 @@ export function htmlToTokens(html: string): Token[] {
     switch (mode){
       case 'tag': {
         const atomicTag = isStartOfAtomicTag(currentWord);
-        const styleTag = isStartOfStyleTag(currentWord);
+        const styleTag = isStartOfStyleTag(currentWord + char);
         if (atomicTag){
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
@@ -331,7 +336,7 @@ export function htmlToTokens(html: string): Token[] {
         }
         break;
       default:
-        throw new Error('Unknown mode ' + mode);
+        return exhaustive(mode);
     }
   }
   if (currentWord){
@@ -389,7 +394,7 @@ function getKeyForToken(token: string){
   }
 
   // Treat entire style tag as needing to be compared
-  var styleTag = /^<(strong|em)[\s>]/.exec(token);
+  const styleTag = styleTagsRegExp.exec(token);
   if (styleTag) {
       return token;
   }
