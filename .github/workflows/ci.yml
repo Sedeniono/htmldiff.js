@@ -18,9 +18,12 @@ jobs:
 
       - name: Install Node.js dependencies
         run: npm ci
-
-      - name : Run test
-        run: npm run test
-
+        
       - name: Run linter
-        run: npm run lint
+        run: npm run lint:ci
+
+      - name: Build Assets
+        run: npm run build
+      
+      - name : Run test
+        run: npm run test:ci
