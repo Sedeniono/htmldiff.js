@@ -33,8 +33,8 @@ describe('htmlToTokens', function(){
       res = htmlToTokens('<p>this is a <strong>test</strong></p>');
     });
 
-    it('should return 11', function(){
-      expect(res.length).to.equal(11);
+    it('should return 9', function(){
+      expect(res.length).to.equal(9);
     });
 
     it('should remove any html comments', function(){

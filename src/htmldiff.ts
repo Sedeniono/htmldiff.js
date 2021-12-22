@@ -37,6 +37,10 @@ function isWhitespace(char: string): boolean {
   return /^\s+$/.test(char);
 }
 
+function exhaustive(a: never): never {
+  return a;
+}
+
 
 const tagRegExp = /^\s*<([^!>][^>]*)>\s*$/;
 /**
@@ -93,6 +97,38 @@ function isStartOfAtomicTag(word: string){
  */
 function isEndOfAtomicTag(word: string, tag: string){
   return word.substring(word.length - tag.length - 2) === ('</' + tag);
+}
+
+const styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s)(^(?!\w)|>)/;
+
+/**
+ * Checks if the current word is the beginning of an style tag. An style tag is one whose
+ * child nodes should be compared, but the entire tag should be treated as one token. This
+ * is useful for tags where it does not make sense to insert <ins> and <del> tags.
+ *
+ * @param {string} word The characters of the current token read so far.
+ *
+ * @return {string|null} The name of the atomic tag if the word will be an atomic tag,
+ *    null otherwise
+ */
+
+function isStartOfStyleTag(word: string) {
+    const result = styleTagsRegExp.exec(word);
+    return result && result[1];
+}
+
+/**
+ * Checks if the current word is the end of an style tag (i.e. it has all the characters,
+ * except for the end bracket of the closing tag, such as '<strong></strong').
+ *
+ * @param {string} word The characters of the current token read so far.
+ * @param {string} tag The ending tag to look for.
+ *
+ * @return {boolean} True if the word is now a complete token (including the end tag),
+ *    false otherwise.
+ */
+function isEndOfStyleTag(word: string, tag: string) {
+    return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 
 /**
@@ -173,6 +209,7 @@ function makeMatch(startInBefore: number, startInAfter: number, length: number, 
     segmentEndInAfter: startInAfter + length - 1
   };}
 
+type ParseMode = 'char' | 'tag' | 'atomic_tag' | 'style_tag' | 'html_comment' | 'whitespace';
 /**
  * Tokenizes a string of HTML.
  *
@@ -181,15 +218,17 @@ function makeMatch(startInBefore: number, startInAfter: number, length: number, 
  * @return {Array.<string>} The list of tokens.
  */
 export function htmlToTokens(html: string): Token[] {
-  let mode = 'char';
+  let mode: ParseMode = 'char';
   let currentWord = '';
   let currentAtomicTag = '';
+  let currentStyleTag = '';
   const words = [];
 
   for (const char of html) {
     switch (mode){
       case 'tag': {
         const atomicTag = isStartOfAtomicTag(currentWord);
+        const styleTag = isStartOfStyleTag(currentWord + char);
         if (atomicTag){
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
@@ -197,6 +236,10 @@ export function htmlToTokens(html: string): Token[] {
         } else if (isStartOfHTMLComment(currentWord)){
           mode = 'html_comment';
           currentWord += char;
+        } else if (styleTag) {
+          mode = 'style_tag';
+          currentStyleTag = styleTag;
+          currentWord = '<nobr>' + currentWord + char;
         } else if (isEndOfTag(char)){
           currentWord += '>';
           words.push(createToken(currentWord));
@@ -227,6 +270,26 @@ export function htmlToTokens(html: string): Token[] {
         if (isEndOfHTMLComment(currentWord)){
           currentWord = '';
           mode = 'char';
+        }
+        break;
+      case 'style_tag':
+        if (isEndOfTag(char) && isEndOfStyleTag(currentWord, currentStyleTag)) {
+            currentWord += '>' + '</nobr>';
+            words.push(createToken(currentWord));
+            currentWord = '';
+            currentStyleTag = '';
+            mode = 'char';
+        }
+        else {
+          // break up styled blocks into individual styled words
+          if (/(\s+|&nbsp;|&#160;)/.test(char)) {
+            currentWord += '</' + currentStyleTag + '>';
+            if (currentWord) {
+                words.push(createToken(currentWord));
+            }
+            currentWord = '<' + currentStyleTag + '>';
+          }
+          currentWord += char;
         }
         break;
       case 'char':
@@ -273,7 +336,7 @@ export function htmlToTokens(html: string): Token[] {
         }
         break;
       default:
-        throw new Error('Unknown mode ' + mode);
+        return exhaustive(mode);
     }
   }
   if (currentWord){
@@ -328,6 +391,12 @@ function getKeyForToken(token: string){
   const iframe = /^<iframe.*src=['"]([^"']*)['"].*>/.exec(token);
   if (iframe) {
     return `<iframe src="${iframe[1]}"></iframe>`;
+  }
+
+  // Treat entire style tag as needing to be compared
+  const styleTag = styleTagsRegExp.exec(token);
+  if (styleTag) {
+      return token;
   }
 
   // If the token is any other element, just grab the tag name.
