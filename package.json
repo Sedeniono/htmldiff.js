@@ -13,7 +13,7 @@
   },
   "private": true,
   "license": "MIT",
-  "main": "dist/htmldiff.ts",
+  "main": "dist/htmldiff.js",
   "files": [
     "dist/htmldiff.d.ts",
     "dist/htmldiff.js",
@@ -33,8 +33,11 @@
     "mocha": "~8.3.0"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dist": "npm run lint:ci && npm run make && npm run test:ci",
     "lint": "eslint --config='.eslintrc.cjs' './src/*.ts' --fix",
-    "test": "npm run make && mocha -R min",
-    "make": "tsc -p tsconfig.json"
+    "lint:ci": "npm run lint -- --max-warnings 0",
+    "test": "npm run build && mocha -R min",
+    "test:ci": "mocha -R min"
   }
 }
