@@ -1,6 +1,34 @@
+/**
+ * htmldiff.js is a library that compares HTML content. It creates a diff between two
+ * HTML documents by combining the two documents and wrapping the differences with
+ * <ins> and <del> tags. Here is a high-level overview of how the diff works.
+ *
+ * 1. Tokenize the before and after HTML with htmlToTokens.
+ * 2. Generate a list of operations that convert the before list of tokens to the after
+ *    list of tokens with calculateOperations, which does the following:
+ *      a. Find all the matching blocks of tokens between the before and after lists of
+ *         tokens with findMatchingBlocks. This is done by finding the single longest
+ *         matching block with findMatch, then iteratively finding the next longest
+ *         matching blocks that precede and follow the longest matching block.
+ *      b. Determine insertions, deletions, and replacements from the matching blocks.
+ *         This is done in calculateOperations.
+ * 3. Render the list of operations by wrapping tokens with <ins> and <del> tags where
+ *    appropriate with renderOperations.
+ *
+ * Example usage:
+ *
+ *   var htmldiff = require('htmldiff.js');
+ *
+ *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>')
+ *   == '<p>this is some <ins>more </ins>text</p>'
+ *
+ *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
+ *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
+ */
 declare type Token = {
     str: string;
     key: string;
+    styles: string[];
 };
 /**
  * Creates a token that holds a string and key representation. The key is used for diffing
@@ -10,7 +38,7 @@ declare type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export declare function createToken(currentWord: string): Token;
+export declare function createToken(currentWord: string, currentStyleTags: string[]): Token;
 declare type Match = {
     segment: Segment;
     length: number;
