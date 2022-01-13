@@ -1,12 +1,12 @@
-import {htmlToTokens, createToken, createSegment, findBestMatch, findMatchingBlocks, createMap} from "../dist/htmldiff.js";
+import {createMap, createSegment, createToken, findBestMatch, findMatchingBlocks, htmlToTokens} from '../dist/htmldiff.js';
 
 describe('findMatchingBlocks', function(){
-    var cut, res, tokenize;
+    let cut, res, tokenize;
 
     beforeEach(function(){
         tokenize = function(tokens){
             return tokens.map(function(token){
-                return createToken(token);
+                return createToken(token, []);
             });
         };
     });
@@ -25,31 +25,31 @@ describe('findMatchingBlocks', function(){
                 res = cut(tokenize(['a', 'apple', 'has', 'a', 'worm']));
             });
 
-            it('should find "a" twice', function(){
-                expect(res['a'].length).to.equal(2);
+            it('should find "a[]" twice', function(){
+                expect(res['a[]'].length).to.equal(2);
             });
 
             it('should find "a" at 0', function(){
-                expect(res['a'][0]).to.equal(0);
+                expect(res['a[]'][0]).to.equal(0);
             });
 
             it('should find "a" at 3', function(){
-                expect(res['a'][1]).to.equal(3);
+                expect(res['a[]'][1]).to.equal(3);
             });
 
             it('should find "has" at 2', function(){
-                expect(res['has'][0]).to.equal(2);
+                expect(res['has[]'][0]).to.equal(2);
             });
         });
     });
 
     describe('findBestMatch', function(){
-        var invoke;
+        let invoke;
 
         beforeEach(function(){
             cut = findBestMatch;
             invoke = function(before, after){
-                var segment = createSegment(before, after, 0, 0);
+                const segment = createSegment(before, after, 0, 0);
 
                 res = cut(segment);
             };
@@ -57,8 +57,8 @@ describe('findMatchingBlocks', function(){
 
         describe('When there is a match', function(){
             beforeEach(function(){
-                var before = tokenize(['a', 'dog', 'bites']);
-                var after = tokenize(['a', 'dog', 'bites', 'a', 'man']);
+                const before = tokenize(['a', 'dog', 'bites']);
+                const after = tokenize(['a', 'dog', 'bites', 'a', 'man']);
                 invoke(before, after);
             });
 
@@ -90,8 +90,8 @@ describe('findMatchingBlocks', function(){
 
         describe('When there is no match', function(){
             beforeEach(function(){
-                var before = tokenize(['the', 'rat', 'sqeaks']);
-                var after = tokenize(['a', 'dog', 'bites', 'a', 'man']);
+                const before = tokenize(['the', 'rat', 'sqeaks']);
+                const after = tokenize(['a', 'dog', 'bites', 'a', 'man']);
                 invoke(before, after);
             });
 
@@ -102,7 +102,7 @@ describe('findMatchingBlocks', function(){
     });
 
     describe('findMatchingBlocks', function(){
-        var segment;
+        let segment;
 
         beforeEach(function(){
             cut = findMatchingBlocks;
@@ -114,8 +114,8 @@ describe('findMatchingBlocks', function(){
 
         describe('When called with a single match', function(){
             beforeEach(function(){
-                var before = htmlToTokens('a dog bites');
-                var after = htmlToTokens('when a dog bites it hurts');
+                const before = htmlToTokens('a dog bites');
+                const after = htmlToTokens('when a dog bites it hurts');
                 segment = createSegment(before, after, 0, 0);
 
                 res = cut(segment);
@@ -128,8 +128,8 @@ describe('findMatchingBlocks', function(){
 
         describe('When called with multiple matches', function(){
             beforeEach(function(){
-                var before = htmlToTokens('the dog bit a man');
-                var after = htmlToTokens('the large brown dog bit a tall man');
+                const before = htmlToTokens('the dog bit a man');
+                const after = htmlToTokens('the large brown dog bit a tall man');
                 segment = createSegment(before, after, 0, 0);
                 res = cut(segment);
             });

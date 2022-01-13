@@ -1,15 +1,15 @@
-import {createToken, findMatchingBlocks, htmlToTokens} from "../dist/htmldiff.js";
+import {createToken, findMatchingBlocks, htmlToTokens} from '../dist/htmldiff.js';
 
 
 describe('htmlToTokens', function(){
-  var cut, res, tokenize;
+  let cut, res, tokenize;
 
   beforeEach(function(){
     cut = htmlToTokens;
 
     tokenize = function(tokens){
       return tokens.map(function(token){
-        return createToken(token);
+        return createToken(token, []);
       });
     };
   });
@@ -68,18 +68,18 @@ describe('htmlToTokens', function(){
     });
 
     it('should identify an object tag as a single token', function(){
-      var cutResult = htmlToTokens('<p><object><param name="1" /><param name="2" /></object></p>');
-      var tokenizeResult = tokenize(
-        ['<p>', '<object><param name="1" /><param name="2" /></object>','</p>']);
+      const cutResult = htmlToTokens('<p><object><param name="1" /><param name="2" /></object></p>');
+      const tokenizeResult = tokenize(
+        ['<p>', '<object><param name="1" /><param name="2" /></object>', '</p>']);
       expect(cutResult).eql(tokenizeResult);
     });
 
     it('should identify a math tag as a single token', function(){
-      var cutResult = htmlToTokens('<p><math xmlns="http://www.w3.org/1998/Math/MathML">' +
+      const cutResult = htmlToTokens('<p><math xmlns="http://www.w3.org/1998/Math/MathML">' +
                           '<mi>&#x03C0;<!-- π --></mi>' +
                           '<mo>&#x2062;<!-- &InvisibleTimes; --></mo>' +
                           '<msup><mi>r</mi><mn>2</mn></msup></math></p>');
-      var tokenizeResult = tokenize([
+      const tokenizeResult = tokenize([
         '<p>',
         '<math xmlns="http://www.w3.org/1998/Math/MathML">' +
           '<mi>&#x03C0;<!-- π --></mi>' +
@@ -91,10 +91,10 @@ describe('htmlToTokens', function(){
     });
 
     it('should identify an svg tag as a single token', function(){
-      var cutResult = htmlToTokens('<p><svg width="100" height="100">' +
+      const cutResult = htmlToTokens('<p><svg width="100" height="100">' +
                           '<circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" ' +
                           'fill="yellow" /></svg></p>');
-      var tokenizeResult = tokenize([
+      const tokenizeResult = tokenize([
         '<p>',
         '<svg width="100" height="100">' +
           '<circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />' +

@@ -46,8 +46,6 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
         to[j] = from[i];
     return to;
 };
-import XRegExp from 'xregexp';
-var unicodeLetterExpr = XRegExp('\\p{L}|\\d');
 function isEndOfTag(char) {
     return char === '>';
 }
@@ -112,7 +110,6 @@ function isEndOfAtomicTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 var styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
-var styleTagsClosingRegExp = /<\/(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of an style tag. An style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
@@ -289,7 +286,7 @@ export function htmlToTokens(html) {
                     currentWord = char;
                     mode = 'whitespace';
                 }
-                else if (unicodeLetterExpr.test(char)) {
+                else if (/[\w\d#@]/.test(char)) {
                     currentWord += char;
                 }
                 else if (/&/.test(char)) {
@@ -378,18 +375,6 @@ function getKeyForToken(token) {
     if (iframe) {
         return "<iframe src=\"" + iframe[1] + "\"></iframe>";
     }
-    // strip style tags from token key
-    if (styleTagsRegExp.test(token) || styleTagsClosingRegExp.test(token)) {
-        return token
-            .replace(styleTagsRegExp, '')
-            .replace(styleTagsClosingRegExp, '')
-            .replace(/(\s+|&nbsp;|&#160;)/g, ' ');
-    }
-    // if (styleTag) {
-    //   const styleTagClose = styleTagsClosingRegExp.exec(token);
-    //   const currentToken = (styleTagClose && styleTagClose[0]) ? token.split(styleTagClose[0])[0] ?? token : token;
-    //   return currentToken.replace('<nobr>', '');
-    // }
     // If the token is any other element, just grab the tag name.
     var tagName = /<([^\s>]+)[\s>]/.exec(token);
     if (tagName) {
@@ -834,64 +819,6 @@ function combineTokenNotes(mapFn, tagFn, tokenNotes) {
     }, { list: [], status: null, lastIndex: 0 }).list;
     return segments.map(mapFn).join('');
 }
-// var nobrOpenRegExp = /<nobr>/g;
-// var nobrCloseRegExp = /<\/nobr>/g;
-/**
- * Ensures that a string does not have a truncated <nobr> tag.
- */
-// function wrapNobr(content) {
-//     console.log(content)
-//     var currentContent = content
-//     var currentOpenTags = 0;
-//     var isInTag = false;
-//     var currentTag = "";
-//     var shouldAddStartTag = false;
-//     for (var charIdx = 0; charIdx < content.length; charIdx++) {
-//         var char = content[charIdx];
-//         if (isInTag) {
-//             currentTag += char;
-//             if (char === ">") {
-//                 if (nobrOpenRegExp.test(currentTag)) {
-//                     currentOpenTags += 1;
-//                 } else if (nobrCloseRegExp.test(currentTag)) {
-//                     currentOpenTags -= 1;
-//                     if (currentOpenTags < 0) {
-//                         shouldAddStartTag = true;
-//                         currentOpenTags = 0;
-//                     }
-//                 }
-//                 currentTag = "";
-//                 isInTag = false;
-//             }
-//         } else if (char === "<") {
-//             isInTag = true;
-//             currentTag += char;
-//         }
-//     }
-//     if (currentOpenTags > 0) {
-//         currentContent = content + "</nobr>";
-//     }
-//     if (shouldAddStartTag) {
-//         currentContent = "<nobr>" + currentContent;
-//     }
-//     console.log(currentContent);
-//     return currentContent;
-// }
-// /**
-//  * Ensures that a string does not have a truncated <nobr> tag.
-//  */
-// function wrapNobr(content: string) {
-//   const nobrOpenRegExp = /<nobr>/g;
-//   const nobrCloseRegExp = /<\/nobr>/g;
-//   const openNobr = content.match(nobrOpenRegExp) || [];
-//   const closeNobr = content.match(nobrCloseRegExp) || [];
-//   if (openNobr.length > closeNobr.length) {
-//       return content + '</nobr>';
-//   } else if (closeNobr.length > openNobr.length) {
-//       return '<nobr>' + content;
-//   }
-//   return content;
-// }
 function arrayDiff(a1, a2) {
     var beforeArray = [];
     var afterArray = [];
