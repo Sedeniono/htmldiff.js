@@ -937,7 +937,8 @@ function arrayDiff(a1: string[], a2: string[]) {
 
 function closeStyles(p: { content: string, styles: string[] }) {
   let currentContent = p.content;
-  p.styles.forEach(tag => currentContent += `</${tag}>`);
+  const styles = [...p.styles];
+  while (styles.length) { currentContent += `</${styles.pop()}>`;}
   return currentContent;
 }
 

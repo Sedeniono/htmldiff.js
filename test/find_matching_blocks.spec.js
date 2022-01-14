@@ -73,8 +73,8 @@ describe('findMatchingBlocks', function(){
 
             describe('When the match is surrounded', function(){
                 beforeEach(function(){
-                    before = tokenize(['dog', 'bites']);
-                    after = tokenize(['the', 'dog', 'bites', 'a', 'man']);
+                    const before = tokenize(['dog', 'bites']);
+                    const after = tokenize(['the', 'dog', 'bites', 'a', 'man']);
                     invoke(before, after);
                 });
 

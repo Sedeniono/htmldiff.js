@@ -843,7 +843,10 @@ function arrayDiff(a1, a2) {
 }
 function closeStyles(p) {
     var currentContent = p.content;
-    p.styles.forEach(function (tag) { return currentContent += "</" + tag + ">"; });
+    var styles = __spreadArray([], __read(p.styles));
+    while (styles.length) {
+        currentContent += "</" + styles.pop() + ">";
+    }
     return currentContent;
 }
 function reduceTokens(tokens) {
