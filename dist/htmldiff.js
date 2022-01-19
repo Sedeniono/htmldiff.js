@@ -1,14 +1,3 @@
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-};
 /**
  * htmldiff.js is a library that compares HTML content. It creates a diff between two
  * HTML documents by combining the two documents and wrapping the differences with
@@ -36,6 +25,27 @@ var __values = (this && this.__values) || function(o) {
  *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
  *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
  */
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
 function isEndOfTag(char) {
     return char === '>';
 }
@@ -99,7 +109,7 @@ function isStartOfAtomicTag(word) {
 function isEndOfAtomicTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-var styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s)(^(?!\w)|>)/;
+var styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of an style tag. An style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
@@ -156,10 +166,11 @@ function isWrappable(token) {
  *
  * @return {Object} A token object with a string and key property.
  */
-export function createToken(currentWord) {
+export function createToken(currentWord, currentStyleTags) {
     return {
         str: currentWord,
-        key: getKeyForToken(currentWord)
+        key: getKeyForToken(currentWord),
+        styles: __spreadArray([], __read(currentStyleTags)),
     };
 }
 /**
@@ -193,151 +204,129 @@ function makeMatch(startInBefore, startInAfter, length, segment) {
  * @return {Array.<string>} The list of tokens.
  */
 export function htmlToTokens(html) {
-    var e_1, _a;
     var mode = 'char';
     var currentWord = '';
     var currentAtomicTag = '';
-    var currentStyleTag = '';
+    var currentStyleTags = [];
     var words = [];
-    try {
-        for (var html_1 = __values(html), html_1_1 = html_1.next(); !html_1_1.done; html_1_1 = html_1.next()) {
-            var char = html_1_1.value;
-            switch (mode) {
-                case 'tag': {
-                    var atomicTag = isStartOfAtomicTag(currentWord);
-                    var styleTag = isStartOfStyleTag(currentWord + char);
-                    if (atomicTag) {
-                        mode = 'atomic_tag';
-                        currentAtomicTag = atomicTag;
-                        currentWord += char;
-                    }
-                    else if (isStartOfHTMLComment(currentWord)) {
-                        mode = 'html_comment';
-                        currentWord += char;
-                    }
-                    else if (styleTag) {
-                        mode = 'style_tag';
-                        currentStyleTag = styleTag;
-                        currentWord = '<nobr>' + currentWord + char;
-                    }
-                    else if (isEndOfTag(char)) {
-                        currentWord += '>';
-                        words.push(createToken(currentWord));
-                        currentWord = '';
-                        if (isWhitespace(char)) {
-                            mode = 'whitespace';
-                        }
-                        else {
-                            mode = 'char';
-                        }
-                    }
-                    else {
-                        currentWord += char;
-                    }
-                    break;
+    for (var charIdx = 0; charIdx < html.length; charIdx++) {
+        var char = html[charIdx];
+        switch (mode) {
+            case 'tag': {
+                var atomicTag = isStartOfAtomicTag(currentWord);
+                var styleTag = isStartOfStyleTag(currentWord + char);
+                var latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
+                var endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
+                if (styleTag) {
+                    currentStyleTags.push(styleTag);
+                    currentWord = '';
+                    mode = 'char';
                 }
-                case 'atomic_tag':
-                    if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)) {
-                        currentWord += '>';
-                        words.push(createToken(currentWord));
-                        currentWord = '';
-                        currentAtomicTag = '';
-                        mode = 'char';
-                    }
-                    else {
-                        currentWord += char;
-                    }
-                    break;
-                case 'html_comment':
+                else if (endOfStyleTag) {
+                    currentStyleTags.pop();
+                    currentWord = '';
+                    mode = 'char';
+                }
+                else if (atomicTag) {
+                    mode = 'atomic_tag';
+                    currentAtomicTag = atomicTag;
                     currentWord += char;
-                    if (isEndOfHTMLComment(currentWord)) {
-                        currentWord = '';
-                        mode = 'char';
-                    }
-                    break;
-                case 'style_tag':
-                    if (isEndOfTag(char) && isEndOfStyleTag(currentWord, currentStyleTag)) {
-                        currentWord += '>' + '</nobr>';
-                        words.push(createToken(currentWord));
-                        currentWord = '';
-                        currentStyleTag = '';
-                        mode = 'char';
-                    }
-                    else {
-                        // break up styled blocks into individual styled words
-                        if (/(\s+|&nbsp;|&#160;)/.test(char)) {
-                            currentWord += '</' + currentStyleTag + '>';
-                            if (currentWord) {
-                                words.push(createToken(currentWord));
-                            }
-                            currentWord = '<' + currentStyleTag + '>';
-                        }
-                        currentWord += char;
-                    }
-                    break;
-                case 'char':
-                    if (isStartOfTag(char)) {
-                        if (currentWord) {
-                            words.push(createToken(currentWord));
-                        }
-                        currentWord = '<';
-                        mode = 'tag';
-                    }
-                    else if (/\s/.test(char)) {
-                        if (currentWord) {
-                            words.push(createToken(currentWord));
-                        }
-                        currentWord = char;
+                }
+                else if (isStartOfHTMLComment(currentWord)) {
+                    mode = 'html_comment';
+                    currentWord += char;
+                }
+                else if (isEndOfTag(char)) {
+                    currentWord += '>';
+                    words.push(createToken(currentWord, currentStyleTags));
+                    currentWord = '';
+                    if (isWhitespace(char)) {
                         mode = 'whitespace';
                     }
-                    else if (/[\w\d#@]/.test(char)) {
-                        currentWord += char;
-                    }
-                    else if (/&/.test(char)) {
-                        if (currentWord) {
-                            words.push(createToken(currentWord));
-                        }
-                        currentWord = char;
-                    }
                     else {
-                        currentWord += char;
-                        words.push(createToken(currentWord));
-                        currentWord = '';
-                    }
-                    break;
-                case 'whitespace':
-                    if (isStartOfTag(char)) {
-                        if (currentWord) {
-                            words.push(createToken(currentWord));
-                        }
-                        currentWord = '<';
-                        mode = 'tag';
-                    }
-                    else if (isWhitespace(char)) {
-                        currentWord += char;
-                    }
-                    else {
-                        if (currentWord) {
-                            words.push(createToken(currentWord));
-                        }
-                        currentWord = char;
                         mode = 'char';
                     }
-                    break;
-                default:
-                    return exhaustive(mode);
+                }
+                else {
+                    currentWord += char;
+                }
+                break;
             }
+            case 'atomic_tag':
+                if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)) {
+                    currentWord += '>';
+                    words.push(createToken(currentWord, currentStyleTags));
+                    currentWord = '';
+                    currentAtomicTag = '';
+                    mode = 'char';
+                }
+                else {
+                    currentWord += char;
+                }
+                break;
+            case 'html_comment':
+                currentWord += char;
+                if (isEndOfHTMLComment(currentWord)) {
+                    currentWord = '';
+                    mode = 'char';
+                }
+                break;
+            case 'char':
+                if (isStartOfTag(char)) {
+                    if (currentWord) {
+                        words.push(createToken(currentWord, currentStyleTags));
+                    }
+                    currentWord = '<';
+                    mode = 'tag';
+                }
+                else if (/\s/.test(char)) {
+                    if (currentWord) {
+                        words.push(createToken(currentWord, currentStyleTags));
+                    }
+                    currentWord = char;
+                    mode = 'whitespace';
+                }
+                else if (/[\w\d#@]/.test(char)) {
+                    currentWord += char;
+                }
+                else if (/&/.test(char)) {
+                    if (currentWord) {
+                        words.push(createToken(currentWord, currentStyleTags));
+                    }
+                    currentWord = char;
+                }
+                else {
+                    currentWord += char;
+                    words.push(createToken(currentWord, currentStyleTags));
+                    currentWord = '';
+                }
+                break;
+            case 'whitespace':
+                if (isStartOfTag(char)) {
+                    if (currentWord) {
+                        words.push(createToken(currentWord, currentStyleTags));
+                    }
+                    currentWord = '<';
+                    mode = 'tag';
+                }
+                else if (isWhitespace(char)) {
+                    currentWord += char;
+                }
+                else {
+                    if (currentWord) {
+                        words.push(createToken(currentWord, currentStyleTags));
+                    }
+                    currentWord = '';
+                    charIdx--; // seek back
+                    mode = 'char';
+                }
+                break;
+            default:
+                return exhaustive(mode);
         }
-    }
-    catch (e_1_1) { e_1 = { error: e_1_1 }; }
-    finally {
-        try {
-            if (html_1_1 && !html_1_1.done && (_a = html_1.return)) _a.call(html_1);
-        }
-        finally { if (e_1) throw e_1.error; }
     }
     if (currentWord) {
-        words.push(createToken(currentWord));
+        words.push(createToken(currentWord, currentStyleTags));
     }
     return words;
 }
@@ -386,11 +375,6 @@ function getKeyForToken(token) {
     if (iframe) {
         return "<iframe src=\"" + iframe[1] + "\"></iframe>";
     }
-    // Treat entire style tag as needing to be compared
-    var styleTag = styleTagsRegExp.exec(token);
-    if (styleTag) {
-        return token;
-    }
     // If the token is any other element, just grab the tag name.
     var tagName = /<([^\s>]+)[\s>]/.exec(token);
     if (tagName) {
@@ -402,6 +386,7 @@ function getKeyForToken(token) {
     }
     return token;
 }
+var tokenMapKey = function (token) { return token.key + JSON.stringify(token.styles); };
 /**
  * Creates a map from token key to an array of indices of locations of the matching token in
  * the list of all tokens.
@@ -413,11 +398,11 @@ function getKeyForToken(token) {
 export function createMap(tokens) {
     return tokens.reduce(function (map, token, index) {
         var _a;
-        if (map[token.key]) {
-            (_a = map[token.key]) === null || _a === void 0 ? void 0 : _a.push(index);
+        if (map[tokenMapKey(token)]) {
+            (_a = map[tokenMapKey(token)]) === null || _a === void 0 ? void 0 : _a.push(index);
         }
         else {
-            map[token.key] = [index];
+            map[tokenMapKey(token)] = [index];
         }
         return map;
     }, {});
@@ -521,7 +506,7 @@ export function findBestMatch(segment) {
         }
         // If the current token is not found in the afterTokens, it won't match and we can move
         // on.
-        var afterTokenLocations = beforeToken && afterMap[beforeToken.key];
+        var afterTokenLocations = beforeToken && afterMap[tokenMapKey(beforeToken)];
         if (!afterTokenLocations) {
             return "continue";
         }
@@ -560,7 +545,7 @@ export function findBestMatch(segment) {
  * @return {Match} The full match.
  */
 function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     var beforeTokens = segment.beforeTokens;
     var afterTokens = segment.afterTokens;
     // If we already have a match that goes to the end of the document, no need to keep looking.
@@ -588,7 +573,9 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
     while (searching && beforeIndex < beforeTokens.length && afterIndex < afterTokens.length) {
         var beforeWord = (_c = beforeTokens[beforeIndex]) === null || _c === void 0 ? void 0 : _c.key;
         var afterWord = (_d = afterTokens[afterIndex]) === null || _d === void 0 ? void 0 : _d.key;
-        if (beforeWord === afterWord) {
+        var beforeStyle = JSON.stringify((_e = beforeTokens[beforeIndex]) === null || _e === void 0 ? void 0 : _e.styles);
+        var afterStyle = JSON.stringify((_f = afterTokens[afterIndex]) === null || _f === void 0 ? void 0 : _f.styles);
+        if (beforeWord === afterWord && beforeStyle === afterStyle) {
             currentLength++;
             beforeIndex = beforeStart + currentLength;
             afterIndex = afterStart + currentLength;
@@ -601,8 +588,8 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
     // have a whitespace token just behind the current match that was previously ignored. If so,
     // we'll expand the current match to include it.
     if (lookBehind && beforeStart > 0 && afterStart > 0) {
-        var prevBeforeKey = (_e = beforeTokens[beforeStart - 1]) === null || _e === void 0 ? void 0 : _e.key;
-        var prevAfterKey = (_f = afterTokens[afterStart - 1]) === null || _f === void 0 ? void 0 : _f.key;
+        var prevBeforeKey = (_g = beforeTokens[beforeStart - 1]) === null || _g === void 0 ? void 0 : _g.key;
+        var prevAfterKey = (_h = afterTokens[afterStart - 1]) === null || _h === void 0 ? void 0 : _h.key;
         if (prevBeforeKey === ' ' && prevAfterKey === ' ') {
             beforeStart--;
             afterStart--;
@@ -770,7 +757,7 @@ export function calculateOperations(beforeTokens, afterTokens) {
 function TokenWrapper(tokens) {
     return {
         tokens: tokens,
-        notes: tokens.reduce(function (data, token, index) {
+        notes: tokens.map(function (token) { return token.str; }).reduce(function (data, token, index) {
             data.notes.push({
                 isWrappable: isWrappable(token),
                 insertedTag: false
@@ -806,14 +793,14 @@ function combineTokenNotes(mapFn, tagFn, tokenNotes) {
     var notes = tokenNotes.notes;
     var tokens = tokenNotes.tokens.slice();
     var segments = tokens.reduce(function (data, token, index) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         if ((_a = notes[index]) === null || _a === void 0 ? void 0 : _a.insertedTag) {
-            tokens[index] = tagFn(tokens[index]);
+            tokens[index] = { key: ((_b = tokens[index]) === null || _b === void 0 ? void 0 : _b.key) || '', str: tagFn((_c = tokens[index]) === null || _c === void 0 ? void 0 : _c.str), styles: ((_d = tokens[index]) === null || _d === void 0 ? void 0 : _d.styles) || [] };
         }
         if (data.status === null) {
-            data.status = (_c = (_b = notes[index]) === null || _b === void 0 ? void 0 : _b.isWrappable) !== null && _c !== void 0 ? _c : false;
+            data.status = (_f = (_e = notes[index]) === null || _e === void 0 ? void 0 : _e.isWrappable) !== null && _f !== void 0 ? _f : false;
         }
-        var status = (_e = (_d = notes[index]) === null || _d === void 0 ? void 0 : _d.isWrappable) !== null && _e !== void 0 ? _e : false;
+        var status = (_h = (_g = notes[index]) === null || _g === void 0 ? void 0 : _g.isWrappable) !== null && _h !== void 0 ? _h : false;
         if (status !== data.status) {
             data.list.push({
                 isWrappable: data.status,
@@ -831,6 +818,53 @@ function combineTokenNotes(mapFn, tagFn, tokenNotes) {
         return data;
     }, { list: [], status: null, lastIndex: 0 }).list;
     return segments.map(mapFn).join('');
+}
+function arrayDiff(a1, a2) {
+    var beforeArray = [];
+    var afterArray = [];
+    var isDiff = false;
+    while (a1.length && a2.length) {
+        var curr1 = a1.shift();
+        var curr2 = a2.shift();
+        if (curr1 !== curr2 || isDiff) {
+            isDiff = true;
+            if (curr1)
+                beforeArray.push(curr1);
+            if (curr2)
+                afterArray.push(curr2);
+        }
+    }
+    beforeArray = __spreadArray(__spreadArray([], __read(beforeArray)), __read(a1));
+    afterArray = __spreadArray(__spreadArray([], __read(afterArray)), __read(a2));
+    return ({
+        before: beforeArray,
+        after: afterArray,
+    });
+}
+function closeStyles(p) {
+    var currentContent = p.content;
+    var styles = __spreadArray([], __read(p.styles));
+    while (styles.length) {
+        currentContent += "</" + styles.pop() + ">";
+    }
+    return currentContent;
+}
+function reduceTokens(tokens) {
+    return closeStyles(tokens.reduce(function (acc, curr) {
+        var currContent = acc.content;
+        var _a = arrayDiff(__spreadArray([], __read(acc.styles)), __spreadArray([], __read(curr.styles))), before = _a.before, after = _a.after;
+        before.forEach(function () {
+            var tag = acc.styles.pop();
+            if (tag)
+                currContent += "</" + tag + ">";
+        });
+        after.forEach(function (tag) {
+            acc.styles.push(tag);
+            currContent += "<" + tag + ">";
+        });
+        currContent += curr.str;
+        return ({ content: currContent, styles: acc.styles });
+    }, { content: '', styles: [] }));
 }
 /**
  * Wraps and concatenates a list of tokens with a tag. Does not wrap tag tokens,
@@ -850,13 +884,13 @@ function wrap(tag, content, opIndex, dataPrefix, className) {
     }
     return combineTokenNotes(function (segment) {
         if (segment.isWrappable) {
-            var val = segment.tokens.join('');
+            var val = reduceTokens(segment.tokens);
             if (val.trim()) {
                 return '<' + tag + attrs + '>' + val + '</' + tag + '>';
             }
         }
         else {
-            return segment.tokens.join('');
+            return reduceTokens(segment.tokens);
         }
         return '';
     }, function (openingTag) {
@@ -891,27 +925,19 @@ var OPS = {
         var tokens = op.endInAfter ?
             afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
             afterTokens.slice(op.startInAfter, 1);
-        return tokens.reduce(function (prev, curr) {
-            return prev + curr.str;
-        }, '');
+        return reduceTokens(tokens);
     },
     'insert': function (op, beforeTokens, afterTokens, opIndex, dataPrefix, className) {
         var tokens = op.endInAfter ?
             afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
             afterTokens.slice(op.startInAfter, 1);
-        var val = tokens.map(function (token) {
-            return token.str;
-        });
-        return wrap('ins', val, opIndex, dataPrefix, className);
+        return wrap('ins', tokens, opIndex, dataPrefix, className);
     },
     'delete': function (op, beforeTokens, afterTokens, opIndex, dataPrefix, className) {
         var tokens = op.endInBefore ?
             beforeTokens.slice(op.startInBefore, op.endInBefore + 1) :
             beforeTokens.slice(op.startInBefore, 1);
-        var val = tokens.map(function (token) {
-            return token.str;
-        });
-        return wrap('del', val, opIndex, dataPrefix, className);
+        return wrap('del', tokens, opIndex, dataPrefix, className);
     },
     'replace': function (op, beforeTokens, afterTokens, opIndex, dataPrefix, className) {
         return OPS.delete.apply(null, [op, beforeTokens, afterTokens, opIndex, dataPrefix, className])

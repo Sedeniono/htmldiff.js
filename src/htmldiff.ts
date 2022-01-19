@@ -25,6 +25,7 @@
  *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
  *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
  */
+
 function isEndOfTag(char: string): boolean {
   return char === '>';
 }
@@ -99,7 +100,7 @@ function isEndOfAtomicTag(word: string, tag: string){
   return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 
-const styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s)(^(?!\w)|>)/;
+const styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 
 /**
  * Checks if the current word is the beginning of an style tag. An style tag is one whose
@@ -157,6 +158,7 @@ function isWrappable(token: string): boolean {
 type Token = {
   str: string;
   key: string;
+  styles: string[];
 };
 
 /**
@@ -167,10 +169,11 @@ type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export function createToken(currentWord: string): Token {
+export function createToken(currentWord: string, currentStyleTags: string[]): Token {
   return {
     str: currentWord,
-    key: getKeyForToken(currentWord)
+    key: getKeyForToken(currentWord),
+    styles: [...currentStyleTags],
   };
 }
 
@@ -209,7 +212,7 @@ function makeMatch(startInBefore: number, startInAfter: number, length: number, 
     segmentEndInAfter: startInAfter + length - 1
   };}
 
-type ParseMode = 'char' | 'tag' | 'atomic_tag' | 'style_tag' | 'html_comment' | 'whitespace';
+type ParseMode = 'char' | 'tag' | 'atomic_tag' | 'html_comment' | 'whitespace';
 /**
  * Tokenizes a string of HTML.
  *
@@ -221,28 +224,35 @@ export function htmlToTokens(html: string): Token[] {
   let mode: ParseMode = 'char';
   let currentWord = '';
   let currentAtomicTag = '';
-  let currentStyleTag = '';
+  const currentStyleTags = [];
   const words = [];
 
-  for (const char of html) {
+  for (let charIdx = 0; charIdx < html.length; charIdx++) {
+    const char = html[charIdx] as string;
     switch (mode){
       case 'tag': {
         const atomicTag = isStartOfAtomicTag(currentWord);
         const styleTag = isStartOfStyleTag(currentWord + char);
-        if (atomicTag){
+        const latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
+        const endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
+        if (styleTag) {
+            currentStyleTags.push(styleTag);
+            currentWord = '';
+            mode = 'char';
+        } else if (endOfStyleTag) {
+            currentStyleTags.pop();
+            currentWord = '';
+            mode = 'char';
+        } else if (atomicTag){
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
           currentWord += char;
         } else if (isStartOfHTMLComment(currentWord)){
           mode = 'html_comment';
           currentWord += char;
-        } else if (styleTag) {
-          mode = 'style_tag';
-          currentStyleTag = styleTag;
-          currentWord = '<nobr>' + currentWord + char;
         } else if (isEndOfTag(char)){
           currentWord += '>';
-          words.push(createToken(currentWord));
+          words.push(createToken(currentWord, currentStyleTags));
           currentWord = '';
           if (isWhitespace(char)){
             mode = 'whitespace';
@@ -257,7 +267,7 @@ export function htmlToTokens(html: string): Token[] {
       case 'atomic_tag':
         if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)){
           currentWord += '>';
-          words.push(createToken(currentWord));
+          words.push(createToken(currentWord, currentStyleTags));
           currentWord = '';
           currentAtomicTag = '';
           mode = 'char';
@@ -272,36 +282,16 @@ export function htmlToTokens(html: string): Token[] {
           mode = 'char';
         }
         break;
-      case 'style_tag':
-        if (isEndOfTag(char) && isEndOfStyleTag(currentWord, currentStyleTag)) {
-            currentWord += '>' + '</nobr>';
-            words.push(createToken(currentWord));
-            currentWord = '';
-            currentStyleTag = '';
-            mode = 'char';
-        }
-        else {
-          // break up styled blocks into individual styled words
-          if (/(\s+|&nbsp;|&#160;)/.test(char)) {
-            currentWord += '</' + currentStyleTag + '>';
-            if (currentWord) {
-                words.push(createToken(currentWord));
-            }
-            currentWord = '<' + currentStyleTag + '>';
-          }
-          currentWord += char;
-        }
-        break;
       case 'char':
         if (isStartOfTag(char)){
           if (currentWord){
-            words.push(createToken(currentWord));
+            words.push(createToken(currentWord, currentStyleTags));
           }
           currentWord = '<';
           mode = 'tag';
         } else if (/\s/.test(char)){
           if (currentWord){
-            words.push(createToken(currentWord));
+            words.push(createToken(currentWord, currentStyleTags));
           }
           currentWord = char;
           mode = 'whitespace';
@@ -309,19 +299,19 @@ export function htmlToTokens(html: string): Token[] {
           currentWord += char;
         } else if (/&/.test(char)){
           if (currentWord){
-            words.push(createToken(currentWord));
+            words.push(createToken(currentWord, currentStyleTags));
           }
           currentWord = char;
         } else {
           currentWord += char;
-          words.push(createToken(currentWord));
+          words.push(createToken(currentWord, currentStyleTags));
           currentWord = '';
         }
         break;
       case 'whitespace':
         if (isStartOfTag(char)){
           if (currentWord){
-            words.push(createToken(currentWord));
+            words.push(createToken(currentWord, currentStyleTags));
           }
           currentWord = '<';
           mode = 'tag';
@@ -329,9 +319,10 @@ export function htmlToTokens(html: string): Token[] {
           currentWord += char;
         } else {
           if (currentWord){
-            words.push(createToken(currentWord));
+            words.push(createToken(currentWord, currentStyleTags));
           }
-          currentWord = char;
+          currentWord = '';
+          charIdx--; // seek back
           mode = 'char';
         }
         break;
@@ -340,7 +331,7 @@ export function htmlToTokens(html: string): Token[] {
     }
   }
   if (currentWord){
-    words.push(createToken(currentWord));
+    words.push(createToken(currentWord, currentStyleTags));
   }
   return words;
 }
@@ -393,12 +384,6 @@ function getKeyForToken(token: string){
     return `<iframe src="${iframe[1]}"></iframe>`;
   }
 
-  // Treat entire style tag as needing to be compared
-  const styleTag = styleTagsRegExp.exec(token);
-  if (styleTag) {
-      return token;
-  }
-
   // If the token is any other element, just grab the tag name.
   const tagName = /<([^\s>]+)[\s>]/.exec(token);
   if (tagName){
@@ -412,6 +397,8 @@ function getKeyForToken(token: string){
   return token;
 }
 
+const tokenMapKey = (token: Token) => token.key + JSON.stringify(token.styles);
+
 /**
  * Creates a map from token key to an array of indices of locations of the matching token in
  * the list of all tokens.
@@ -423,10 +410,10 @@ function getKeyForToken(token: string){
 export function createMap(tokens: Token[]): Record<string, number[]> {
   return tokens.reduce(
     function(map: Record<string, number[]>, token: Token, index: number) {
-      if (map[token.key]){
-        map[token.key]?.push(index);
+      if (map[tokenMapKey(token)]){
+        map[tokenMapKey(token)]?.push(index);
       } else {
-        map[token.key] = [index];
+        map[tokenMapKey(token)] = [index];
       }
       return map;
     },
@@ -545,7 +532,7 @@ export function findBestMatch(segment: Segment): Match | undefined {
 
     // If the current token is not found in the afterTokens, it won't match and we can move
     // on.
-    const afterTokenLocations = beforeToken && afterMap[beforeToken.key];
+    const afterTokenLocations = beforeToken && afterMap[tokenMapKey(beforeToken)];
     if(!afterTokenLocations){
       continue;
     }
@@ -614,7 +601,9 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
   while (searching && beforeIndex < beforeTokens.length && afterIndex < afterTokens.length){
     const beforeWord = beforeTokens[beforeIndex]?.key;
     const afterWord = afterTokens[afterIndex]?.key;
-    if (beforeWord === afterWord){
+    const beforeStyle = JSON.stringify(beforeTokens[beforeIndex]?.styles);
+    const afterStyle = JSON.stringify(afterTokens[afterIndex]?.styles);
+    if (beforeWord === afterWord && beforeStyle === afterStyle){
       currentLength++;
       beforeIndex = beforeStart + currentLength;
       afterIndex = afterStart + currentLength;
@@ -836,21 +825,21 @@ export function calculateOperations(beforeTokens: Token[], afterTokens: Token[])
  * tags.
  */
 type TokenNotes = {
-  tokens: string[];
+  tokens: Token[];
   notes: Array<{
     isWrappable: boolean;
     insertedTag: boolean;
   }>;
 };
 
-function TokenWrapper(tokens: string[]): TokenNotes {
+function TokenWrapper(tokens: Token[]): TokenNotes {
   type Data = {
     notes: Array<{isWrappable: boolean, insertedTag: boolean}>;
     tagStack: Array<{tag: string, position: number}>;
   };
   return {
     tokens: tokens,
-    notes: tokens.reduce<Data>(function(data: Data, token: string, index: number) {
+    notes: tokens.map(token => token.str).reduce<Data>(function(data: Data, token: string, index: number) {
       data.notes.push({
         isWrappable: isWrappable(token),
         insertedTag: false
@@ -874,7 +863,7 @@ function TokenWrapper(tokens: string[]): TokenNotes {
   };
 }
 
-type WrappableTokens = {isWrappable: boolean, tokens: string[]};
+type WrappableTokens = {isWrappable: boolean, tokens: Token[]};
 
 /**
  * Wraps the contained tokens in tags based on output given by a map function. Each segment of
@@ -897,9 +886,9 @@ function combineTokenNotes(
     status: boolean | null;
     lastIndex: number;
   }>(
-    function(data: {list: WrappableTokens[], status: boolean | null, lastIndex: number}, token: string, index: number){
+    function(data: {list: WrappableTokens[], status: boolean | null, lastIndex: number}, token: Token, index: number){
       if (notes[index]?.insertedTag){
-        tokens[index] = tagFn(tokens[index]);
+        tokens[index] = {key: tokens[index]?.key || '', str: tagFn(tokens[index]?.str), styles: tokens[index]?.styles || []};
       }
       if (data.status === null){
         data.status = notes[index]?.isWrappable ?? false;
@@ -925,6 +914,51 @@ function combineTokenNotes(
   return segments.map(mapFn).join('');
 }
 
+function arrayDiff(a1: string[], a2: string[]) {
+  let beforeArray: string[] = [];
+  let afterArray: string[] = [];
+  let isDiff = false;
+  while (a1.length && a2.length) {
+      const curr1 = a1.shift();
+      const curr2 = a2.shift();
+      if (curr1 !== curr2 || isDiff) {
+          isDiff = true;
+          if (curr1) beforeArray.push(curr1);
+          if (curr2) afterArray.push(curr2);
+      }
+  }
+  beforeArray = [...beforeArray, ...a1];
+  afterArray = [...afterArray, ...a2];
+  return ({
+      before: beforeArray,
+      after: afterArray,
+  });
+}
+
+function closeStyles(p: { content: string, styles: string[] }) {
+  let currentContent = p.content;
+  const styles = [...p.styles];
+  while (styles.length) { currentContent += `</${styles.pop()}>`;}
+  return currentContent;
+}
+
+function reduceTokens(tokens: Token[]) {
+  return closeStyles(tokens.reduce((acc: { content: string, styles: string[] }, curr: Token) => {
+      let currContent = acc.content;
+      const { before, after } = arrayDiff([...acc.styles], [...curr.styles]);
+      before.forEach(() => {
+          const tag = acc.styles.pop();
+          if (tag) currContent += `</${tag}>`;
+      });
+      after.forEach((tag: string) => {
+          acc.styles.push(tag);
+          currContent += `<${tag}>`;
+      });
+      currContent += curr.str;
+      return ({ content: currContent, styles: acc.styles });
+  }, {content: '', styles: []}));
+}
+
 /**
  * Wraps and concatenates a list of tokens with a tag. Does not wrap tag tokens,
  * unless they are wrappable (i.e. void and atomic tags).
@@ -934,7 +968,7 @@ function combineTokenNotes(
  * @param {string} dataPrefix (Optional) The prefix to use in data attributes.
  * @param {string} className (Optional) The class name to include in the wrapper tag.
  */
-function wrap(tag: string, content: string[], opIndex: number, dataPrefix: string, className: string){
+function wrap(tag: string, content: Token[], opIndex: number, dataPrefix: string, className: string){
   const wrapper: TokenNotes = TokenWrapper(content);
   dataPrefix = dataPrefix ? dataPrefix + '-' : '';
   let attrs = ` data-${dataPrefix}operation-index="${opIndex}"`;
@@ -945,12 +979,12 @@ function wrap(tag: string, content: string[], opIndex: number, dataPrefix: strin
   return combineTokenNotes(
     function(segment: WrappableTokens){
       if (segment.isWrappable){
-        const val = segment.tokens.join('');
+        const val = reduceTokens(segment.tokens);
         if (val.trim()){
           return '<' + tag + attrs + '>' + val + '</' + tag + '>';
         }
       } else {
-        return segment.tokens.join('');
+        return reduceTokens(segment.tokens);
       }
       return '';
     },
@@ -992,27 +1026,19 @@ const OPS: {
     const tokens = op.endInAfter ?
       afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
       afterTokens.slice(op.startInAfter, 1);
-    return tokens.reduce(function(prev: string, curr: Token){
-      return prev + curr.str;
-    }, '');
+    return reduceTokens(tokens);
   },
   'insert': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
     const tokens = op.endInAfter ?
       afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
       afterTokens.slice(op.startInAfter, 1);
-    const val = tokens.map(function(token: Token){
-      return token.str;
-    });
-    return wrap('ins', val, opIndex, dataPrefix, className);
+    return wrap('ins', tokens, opIndex, dataPrefix, className);
   },
   'delete': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
     const tokens = op.endInBefore ?
       beforeTokens.slice(op.startInBefore, op.endInBefore + 1) :
       beforeTokens.slice(op.startInBefore, 1);
-    const val = tokens.map(function(token: Token){
-      return token.str;
-    });
-    return wrap('del', val, opIndex, dataPrefix, className);
+    return wrap('del', tokens, opIndex, dataPrefix, className);
   },
   'replace': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
     return OPS.delete.apply(null, [op, beforeTokens, afterTokens, opIndex, dataPrefix, className])

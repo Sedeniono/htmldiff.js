@@ -2,10 +2,14 @@ module.exports = {
   env: {
     es6: true,
     node: true,
+    mocha: true,
   },
   extends: [
     "eslint:recommended",
   ],
+  globals: {
+    expect: false,
+  },
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: [
