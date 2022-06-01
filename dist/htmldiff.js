@@ -1035,7 +1035,6 @@ export default function diff(before, after, className, dataPrefix) {
         return before;
     var beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>'));
     var afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>'));
-    console.log(beforeTokens, afterTokens)
     var ops = calculateOperations(beforeTokens, afterTokens);
     return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
 }
