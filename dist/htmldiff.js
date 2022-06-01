@@ -111,7 +111,7 @@ function isEndOfAtomicTag(word, tag) {
 }
 var styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 /**
- * Checks if the current word is the beginning of an style tag. An style tag is one whose
+ * Checks if the current word is the beginning of a style tag. A style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
  * is useful for tags where it does not make sense to insert <ins> and <del> tags.
  *
@@ -125,7 +125,7 @@ function isStartOfStyleTag(word) {
     return result && result[1];
 }
 /**
- * Checks if the current word is the end of an style tag (i.e. it has all the characters,
+ * Checks if the current word is the end of a style tag (i.e. it has all the characters,
  * except for the end bracket of the closing tag, such as '<strong></strong').
  *
  * @param {string} word The characters of the current token read so far.
@@ -135,6 +135,34 @@ function isStartOfStyleTag(word) {
  *    false otherwise.
  */
 function isEndOfStyleTag(word, tag) {
+    return word.substring(word.length - tag.length - 2) === ('</' + tag);
+}
+var tableTagsRegExp = /^<(table|tbody|thead|tr|th|td)(^(?!\w)|>)/;
+/**
+ * Checks if the current word is the beginning of a table tag. A table tag is one whose
+ * child nodes should be compared, but the entire tag should be treated as one token. This
+ * is useful for tags where it does not make sense to insert <ins> and <del> tags.
+ *
+ * @param {string} word The characters of the current token read so far.
+ *
+ * @return {string|null} The name of the atomic tag if the word will be an atomic tag,
+ *    null otherwise
+ */
+function isStartOfTableTag(word) {
+    var result = tableTagsRegExp.exec(word);
+    return result && result[1];
+}
+/**
+* Checks if the current word is the end of a table tag (i.e. it has all the characters,
+* except for the end bracket of the closing tag, such as '<td></td').
+*
+* @param {string} word The characters of the current token read so far.
+* @param {string} tag The ending tag to look for.
+*
+* @return {boolean} True if the word is now a complete token (including the end tag),
+*    false otherwise.
+*/
+function isEndOfTableTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 /**
@@ -166,11 +194,12 @@ function isWrappable(token) {
  *
  * @return {Object} A token object with a string and key property.
  */
-export function createToken(currentWord, currentStyleTags) {
+export function createToken(currentWord, currentStyleTags, currentTableTags) {
     return {
         str: currentWord,
         key: getKeyForToken(currentWord),
         styles: __spreadArray([], __read(currentStyleTags)),
+        tableTags: __spreadArray([], __read(currentTableTags)),
     };
 }
 /**
@@ -208,6 +237,7 @@ export function htmlToTokens(html) {
     var currentWord = '';
     var currentAtomicTag = '';
     var currentStyleTags = [];
+    var currentTableTags = [];
     var words = [];
     for (var charIdx = 0; charIdx < html.length; charIdx++) {
         var char = html[charIdx];
@@ -217,6 +247,9 @@ export function htmlToTokens(html) {
                 var styleTag = isStartOfStyleTag(currentWord + char);
                 var latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
                 var endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
+                var tableTag = isStartOfTableTag(currentWord + char);
+                var latestTableTag = currentTableTags.length && currentTableTags[currentTableTags.length - 1];
+                var endOfTableTag = isEndOfTag(char) && latestTableTag && isEndOfTableTag(currentWord, latestTableTag);
                 if (styleTag) {
                     currentStyleTags.push(styleTag);
                     currentWord = '';
@@ -224,6 +257,20 @@ export function htmlToTokens(html) {
                 }
                 else if (endOfStyleTag) {
                     currentStyleTags.pop();
+                    currentWord = '';
+                    mode = 'char';
+                }
+                else if (tableTag) {
+                    currentTableTags.push(tableTag);
+                    currentWord += char;
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                    currentWord = '';
+                    mode = 'char';
+                }
+                else if (endOfTableTag) {
+                    currentTableTags.pop();
+                    currentWord += '>';
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
                     mode = 'char';
                 }
@@ -238,7 +285,7 @@ export function htmlToTokens(html) {
                 }
                 else if (isEndOfTag(char)) {
                     currentWord += '>';
-                    words.push(createToken(currentWord, currentStyleTags));
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
                     if (isWhitespace(char)) {
                         mode = 'whitespace';
@@ -255,7 +302,7 @@ export function htmlToTokens(html) {
             case 'atomic_tag':
                 if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)) {
                     currentWord += '>';
-                    words.push(createToken(currentWord, currentStyleTags));
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
                     currentAtomicTag = '';
                     mode = 'char';
@@ -274,14 +321,14 @@ export function htmlToTokens(html) {
             case 'char':
                 if (isStartOfTag(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags));
+                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = '<';
                     mode = 'tag';
                 }
                 else if (/\s/.test(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags));
+                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
                     mode = 'whitespace';
@@ -291,20 +338,20 @@ export function htmlToTokens(html) {
                 }
                 else if (/&/.test(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags));
+                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
                 }
                 else {
                     currentWord += char;
-                    words.push(createToken(currentWord, currentStyleTags));
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
                 }
                 break;
             case 'whitespace':
                 if (isStartOfTag(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags));
+                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = '<';
                     mode = 'tag';
@@ -314,7 +361,7 @@ export function htmlToTokens(html) {
                 }
                 else {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags));
+                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = '';
                     charIdx--; // seek back
@@ -326,7 +373,7 @@ export function htmlToTokens(html) {
         }
     }
     if (currentWord) {
-        words.push(createToken(currentWord, currentStyleTags));
+        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
     }
     return words;
 }
@@ -386,7 +433,7 @@ function getKeyForToken(token) {
     }
     return token;
 }
-var tokenMapKey = function (token) { return token.key + JSON.stringify(token.styles); };
+var tokenMapKey = function (token) { return token.key + JSON.stringify(token.styles) + JSON.stringify(token.tableTags); };
 /**
  * Creates a map from token key to an array of indices of locations of the matching token in
  * the list of all tokens.
@@ -793,14 +840,14 @@ function combineTokenNotes(mapFn, tagFn, tokenNotes) {
     var notes = tokenNotes.notes;
     var tokens = tokenNotes.tokens.slice();
     var segments = tokens.reduce(function (data, token, index) {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         if ((_a = notes[index]) === null || _a === void 0 ? void 0 : _a.insertedTag) {
-            tokens[index] = { key: ((_b = tokens[index]) === null || _b === void 0 ? void 0 : _b.key) || '', str: tagFn((_c = tokens[index]) === null || _c === void 0 ? void 0 : _c.str), styles: ((_d = tokens[index]) === null || _d === void 0 ? void 0 : _d.styles) || [] };
+            tokens[index] = { key: ((_b = tokens[index]) === null || _b === void 0 ? void 0 : _b.key) || '', str: tagFn((_c = tokens[index]) === null || _c === void 0 ? void 0 : _c.str), styles: ((_d = tokens[index]) === null || _d === void 0 ? void 0 : _d.styles) || [], tableTags: ((_e = tokens[index]) === null || _e === void 0 ? void 0 : _e.tableTags) || [] };
         }
         if (data.status === null) {
-            data.status = (_f = (_e = notes[index]) === null || _e === void 0 ? void 0 : _e.isWrappable) !== null && _f !== void 0 ? _f : false;
+            data.status = (_g = (_f = notes[index]) === null || _f === void 0 ? void 0 : _f.isWrappable) !== null && _g !== void 0 ? _g : false;
         }
-        var status = (_h = (_g = notes[index]) === null || _g === void 0 ? void 0 : _g.isWrappable) !== null && _h !== void 0 ? _h : false;
+        var status = (_j = (_h = notes[index]) === null || _h === void 0 ? void 0 : _h.isWrappable) !== null && _j !== void 0 ? _j : false;
         if (status !== data.status) {
             data.list.push({
                 isWrappable: data.status,
@@ -986,8 +1033,9 @@ export function renderOperations(beforeTokens, afterTokens, operations, dataPref
 export default function diff(before, after, className, dataPrefix) {
     if (before === after)
         return before;
-    var beforeTokens = htmlToTokens(before);
-    var afterTokens = htmlToTokens(after);
+    var beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>'));
+    var afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>'));
+    console.log(beforeTokens, afterTokens)
     var ops = calculateOperations(beforeTokens, afterTokens);
     return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
 }

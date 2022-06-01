@@ -103,7 +103,7 @@ function isEndOfAtomicTag(word: string, tag: string){
 const styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 
 /**
- * Checks if the current word is the beginning of an style tag. An style tag is one whose
+ * Checks if the current word is the beginning of a style tag. A style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
  * is useful for tags where it does not make sense to insert <ins> and <del> tags.
  *
@@ -119,7 +119,7 @@ function isStartOfStyleTag(word: string) {
 }
 
 /**
- * Checks if the current word is the end of an style tag (i.e. it has all the characters,
+ * Checks if the current word is the end of a style tag (i.e. it has all the characters,
  * except for the end bracket of the closing tag, such as '<strong></strong').
  *
  * @param {string} word The characters of the current token read so far.
@@ -132,6 +132,34 @@ function isEndOfStyleTag(word: string, tag: string) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 
+const tableTagsRegExp = /^<(table|tbody|thead|tr|th|td)(^(?!\w)|>)/;
+/**
+ * Checks if the current word is the beginning of a table tag. A table tag is one whose
+ * child nodes should be compared, but the entire tag should be treated as one token. This
+ * is useful for tags where it does not make sense to insert <ins> and <del> tags.
+ *
+ * @param {string} word The characters of the current token read so far.
+ *
+ * @return {string|null} The name of the atomic tag if the word will be an atomic tag,
+ *    null otherwise
+ */
+function isStartOfTableTag(word: string) {
+  const result = tableTagsRegExp.exec(word);
+  return result && result[1];
+}
+/**
+* Checks if the current word is the end of a table tag (i.e. it has all the characters,
+* except for the end bracket of the closing tag, such as '<td></td').
+*
+* @param {string} word The characters of the current token read so far.
+* @param {string} tag The ending tag to look for.
+*
+* @return {boolean} True if the word is now a complete token (including the end tag),
+*    false otherwise.
+*/
+function isEndOfTableTag(word: string, tag: string) {
+  return word.substring(word.length - tag.length - 2) === ('</' + tag);
+}
 /**
  * Checks if a tag is a void tag.
  *
@@ -159,6 +187,7 @@ type Token = {
   str: string;
   key: string;
   styles: string[];
+  tableTags: string[];
 };
 
 /**
@@ -169,11 +198,12 @@ type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export function createToken(currentWord: string, currentStyleTags: string[]): Token {
+export function createToken(currentWord: string, currentStyleTags: string[], currentTableTags: string[]): Token {
   return {
     str: currentWord,
     key: getKeyForToken(currentWord),
     styles: [...currentStyleTags],
+    tableTags: [...currentTableTags],
   };
 }
 
@@ -225,6 +255,7 @@ export function htmlToTokens(html: string): Token[] {
   let currentWord = '';
   let currentAtomicTag = '';
   const currentStyleTags = [];
+  const currentTableTags = [];
   const words = [];
 
   for (let charIdx = 0; charIdx < html.length; charIdx++) {
@@ -235,6 +266,9 @@ export function htmlToTokens(html: string): Token[] {
         const styleTag = isStartOfStyleTag(currentWord + char);
         const latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
         const endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
+        const tableTag = isStartOfTableTag(currentWord + char);
+        const latestTableTag = currentTableTags.length && currentTableTags[currentTableTags.length - 1];
+        const endOfTableTag = isEndOfTag(char) && latestTableTag && isEndOfTableTag(currentWord, latestTableTag);
         if (styleTag) {
             currentStyleTags.push(styleTag);
             currentWord = '';
@@ -243,7 +277,19 @@ export function htmlToTokens(html: string): Token[] {
             currentStyleTags.pop();
             currentWord = '';
             mode = 'char';
-        } else if (atomicTag){
+        } else if (tableTag) {
+          currentTableTags.push(tableTag);
+          currentWord += char;
+          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+          currentWord = '';
+          mode = 'char';
+      } else if (endOfTableTag) {
+          currentTableTags.pop();
+          currentWord += '>';
+          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+          currentWord = '';
+          mode = 'char';
+      } else if (atomicTag){
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
           currentWord += char;
@@ -252,7 +298,7 @@ export function htmlToTokens(html: string): Token[] {
           currentWord += char;
         } else if (isEndOfTag(char)){
           currentWord += '>';
-          words.push(createToken(currentWord, currentStyleTags));
+          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
           if (isWhitespace(char)){
             mode = 'whitespace';
@@ -267,7 +313,7 @@ export function htmlToTokens(html: string): Token[] {
       case 'atomic_tag':
         if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)){
           currentWord += '>';
-          words.push(createToken(currentWord, currentStyleTags));
+          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
           currentAtomicTag = '';
           mode = 'char';
@@ -285,13 +331,13 @@ export function htmlToTokens(html: string): Token[] {
       case 'char':
         if (isStartOfTag(char)){
           if (currentWord){
-            words.push(createToken(currentWord, currentStyleTags));
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = '<';
           mode = 'tag';
         } else if (/\s/.test(char)){
           if (currentWord){
-            words.push(createToken(currentWord, currentStyleTags));
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = char;
           mode = 'whitespace';
@@ -299,19 +345,19 @@ export function htmlToTokens(html: string): Token[] {
           currentWord += char;
         } else if (/&/.test(char)){
           if (currentWord){
-            words.push(createToken(currentWord, currentStyleTags));
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = char;
         } else {
           currentWord += char;
-          words.push(createToken(currentWord, currentStyleTags));
+          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
         }
         break;
       case 'whitespace':
         if (isStartOfTag(char)){
           if (currentWord){
-            words.push(createToken(currentWord, currentStyleTags));
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = '<';
           mode = 'tag';
@@ -319,7 +365,7 @@ export function htmlToTokens(html: string): Token[] {
           currentWord += char;
         } else {
           if (currentWord){
-            words.push(createToken(currentWord, currentStyleTags));
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = '';
           charIdx--; // seek back
@@ -331,7 +377,7 @@ export function htmlToTokens(html: string): Token[] {
     }
   }
   if (currentWord){
-    words.push(createToken(currentWord, currentStyleTags));
+    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
   }
   return words;
 }
@@ -397,7 +443,7 @@ function getKeyForToken(token: string){
   return token;
 }
 
-const tokenMapKey = (token: Token) => token.key + JSON.stringify(token.styles);
+const tokenMapKey = (token: Token) => token.key + JSON.stringify(token.styles) + JSON.stringify(token.tableTags);
 
 /**
  * Creates a map from token key to an array of indices of locations of the matching token in
@@ -888,7 +934,7 @@ function combineTokenNotes(
   }>(
     function(data: {list: WrappableTokens[], status: boolean | null, lastIndex: number}, token: Token, index: number){
       if (notes[index]?.insertedTag){
-        tokens[index] = {key: tokens[index]?.key || '', str: tagFn(tokens[index]?.str), styles: tokens[index]?.styles || []};
+        tokens[index] = {key: tokens[index]?.key || '', str: tagFn(tokens[index]?.str), styles: tokens[index]?.styles || [], tableTags: tokens[index]?.tableTags || []};
       }
       if (data.status === null){
         data.status = notes[index]?.isWrappable ?? false;
@@ -1090,8 +1136,8 @@ export function renderOperations(beforeTokens: Token[], afterTokens: Token[], op
 export default function diff(before: string, after: string, className: string, dataPrefix: string){
   if (before === after) return before;
 
-  const beforeTokens = htmlToTokens(before);
-  const afterTokens = htmlToTokens(after);
+  const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>'));
+  const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>'));
   const ops = calculateOperations(beforeTokens, afterTokens);
   return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
 }

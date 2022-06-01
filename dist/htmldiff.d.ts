@@ -29,6 +29,7 @@ declare type Token = {
     str: string;
     key: string;
     styles: string[];
+    tableTags: string[];
 };
 /**
  * Creates a token that holds a string and key representation. The key is used for diffing
@@ -38,7 +39,7 @@ declare type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export declare function createToken(currentWord: string, currentStyleTags: string[]): Token;
+export declare function createToken(currentWord: string, currentStyleTags: string[], currentTableTags: string[]): Token;
 declare type Match = {
     segment: Segment;
     length: number;
