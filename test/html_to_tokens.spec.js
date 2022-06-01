@@ -9,7 +9,7 @@ describe('htmlToTokens', function(){
 
     tokenize = function(tokens){
       return tokens.map(function(token){
-        return createToken(token, []);
+        return createToken(token, [], []);
       });
     };
   });
