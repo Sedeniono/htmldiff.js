@@ -6,7 +6,7 @@ describe('findMatchingBlocks', function(){
     beforeEach(function(){
         tokenize = function(tokens){
             return tokens.map(function(token){
-                return createToken(token, []);
+                return createToken(token, [], []);
             });
         };
     });
@@ -25,20 +25,20 @@ describe('findMatchingBlocks', function(){
                 res = cut(tokenize(['a', 'apple', 'has', 'a', 'worm']));
             });
 
-            it('should find "a[]" twice', function(){
-                expect(res['a[]'].length).to.equal(2);
+            it('should find "a[][]" twice', function(){
+                expect(res['a[][]'].length).to.equal(2);
             });
 
             it('should find "a" at 0', function(){
-                expect(res['a[]'][0]).to.equal(0);
+                expect(res['a[][]'][0]).to.equal(0);
             });
 
             it('should find "a" at 3', function(){
-                expect(res['a[]'][1]).to.equal(3);
+                expect(res['a[][]'][1]).to.equal(3);
             });
 
             it('should find "has" at 2', function(){
-                expect(res['has[]'][0]).to.equal(2);
+                expect(res['has[][]'][0]).to.equal(2);
             });
         });
     });
