@@ -1136,8 +1136,8 @@ export function renderOperations(beforeTokens: Token[], afterTokens: Token[], op
 export default function diff(before: string, after: string, className: string, dataPrefix: string){
   if (before === after) return before;
 
-  const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>'));
-  const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>'));
+  const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>').replace(/<hr( data-page-break="true")?>/, '<hr$1></hr>'));
+  const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>').replace(/<hr( data-page-break="true")?>/, '<hr$1></hr>'));
   const ops = calculateOperations(beforeTokens, afterTokens);
   return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
 }
