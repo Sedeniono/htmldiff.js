@@ -1033,8 +1033,8 @@ export function renderOperations(beforeTokens, afterTokens, operations, dataPref
 export default function diff(before, after, className, dataPrefix) {
     if (before === after)
         return before;
-    var beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>'));
-    var afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>'));
+    var beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>').replace(/<hr( data-page-break="true")*>/, '<hr$1></hr>'));
+    var afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>').replace(/<hr( data-page-break="true")*>/, '<hr$1></hr>'));
     var ops = calculateOperations(beforeTokens, afterTokens);
     return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
 }
