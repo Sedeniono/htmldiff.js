@@ -109,7 +109,7 @@ function isStartOfAtomicTag(word) {
 function isEndOfAtomicTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-var styleTagsRegExp = /^<(strong|em|b|i|q|cite|blockquote|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
+var styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of a style tag. A style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
@@ -137,11 +137,13 @@ function isStartOfStyleTag(word) {
 function isEndOfStyleTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-var tableTagsRegExp = /^<(table|tbody|thead|tr|th|td)(^(?!\w)|>)/;
+var tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote)(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of a table tag. A table tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
- * is useful for tags where it does not make sense to insert <ins> and <del> tags.
+ * is useful for tags where it does not make sense to insert <ins> and <del> tags. We include
+ * blockquotes here because their external styling makes them closer to table tags in their
+ * handling than other style tags.
  *
  * @param {string} word The characters of the current token read so far.
  *
