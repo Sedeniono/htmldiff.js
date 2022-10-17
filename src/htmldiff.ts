@@ -732,7 +732,7 @@ export function findMatchingBlocks(segment: Segment): Match[] {
         // If there's an unmatched area at the start of the segment, create a new segment
         // from that area and throw it into the segments array to get processed.
         if (match.segmentStartInBefore > 0 && match.segmentStartInAfter > 0){
-          const leftBeforeTokens = segment.beforeTokens.slice(
+          const leftBeforeTokens = currSegment.beforeTokens.slice(
             0, match.segmentStartInBefore);
           const leftAfterTokens = currSegment.afterTokens.slice(0, match.segmentStartInAfter);
 
