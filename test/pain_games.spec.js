@@ -123,10 +123,12 @@ const basicToFancy = `<table>
 </thead>
 <tbody>
 <tr>
-<td><del data-operation-index="1">a</del></td><td><del data-operation-index="1">b</del><p data-diff-node="ins" data-operation-index="1"><ins data-operation-index="1">a</ins></p><p data-diff-node="ins" data-operation-index="1"><ins data-operation-index="1">aa</ins></p></td><td><ins data-operation-index="1">b</ins><br data-diff-node="ins" data-operation-index="1"></br><ins data-operation-index="1">bb</ins></td>
+<td><p>a</p><p data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">aa</ins></p></td>
+<td>b<br data-diff-node="ins" data-operation-index="5"></br><ins data-operation-index="5">bb</ins></td>
 </tr>
 <tr>
-<td><del data-operation-index="3">c</del></td><td><del data-operation-index="3">d</del><ul data-diff-node="ins" data-operation-index="3"><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">c</ins></li><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">cc</ins></li></ul></td><td><ol data-diff-node="ins" data-operation-index="3"><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">c</ins></li><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">cc</ins></li></ol></td>
+<td><del data-operation-index="7">c</del><ul data-diff-node="ins" data-operation-index="7"><li data-diff-node="ins" data-operation-index="7"><ins data-operation-index="7">c</ins></li><li data-diff-node="ins" data-operation-index="7"><ins data-operation-index="7">cc</ins></li></ul></td>
+<td><del data-operation-index="9">d</del><ol data-diff-node="ins" data-operation-index="9"><li data-diff-node="ins" data-operation-index="9"><ins data-operation-index="9">c</ins></li><li data-diff-node="ins" data-operation-index="9"><ins data-operation-index="9">cc</ins></li></ol></td>
 </tr>
 </tbody>
 </table>`;
@@ -140,10 +142,12 @@ const fancyToBasic = `<table>
 </thead>
 <tbody>
 <tr>
-<td><del data-operation-index="1">a</del></td><td><del data-operation-index="1">b</del><p data-diff-node="ins" data-operation-index="1"><ins data-operation-index="1">a</ins></p><p data-diff-node="ins" data-operation-index="1"><ins data-operation-index="1">aa</ins></p></td><td><ins data-operation-index="1">b</ins><br data-diff-node="ins" data-operation-index="1"></br><ins data-operation-index="1">bb</ins></td>
+<td><p>a</p><p data-diff-node="del" data-operation-index="3"><del data-operation-index="3">aa</del></p></td>
+<td>b<br data-diff-node="del" data-operation-index="5"></br><del data-operation-index="5">bb</del></td>
 </tr>
 <tr>
-<td><del data-operation-index="3">c</del></td><td><del data-operation-index="3">d</del><ul data-diff-node="ins" data-operation-index="3"><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">c</ins></li><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">cc</ins></li></ul></td><td><ol data-diff-node="ins" data-operation-index="3"><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">c</ins></li><li data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">cc</ins></li></ol></td>
+<td><ul data-diff-node="del" data-operation-index="7"><li data-diff-node="del" data-operation-index="7"><del data-operation-index="7">c</del></li><li data-diff-node="del" data-operation-index="7"><del data-operation-index="7">cc</del></li></ul><ins data-operation-index="7">c</ins></td>
+<td><ol data-diff-node="del" data-operation-index="9"><li data-diff-node="del" data-operation-index="9"><del data-operation-index="9">c</del></li><li data-diff-node="del" data-operation-index="9"><del data-operation-index="9">cc</del></li></ol><ins data-operation-index="9">d</ins></td>
 </tr>
 </tbody>
 </table>`;
@@ -264,7 +268,7 @@ describe('Pain Games', function(){
             expect(res).to.equal(basicToFancy);
         });
         it ('should do alright converting a fancy table to a basic one', function(){
-            res = cut(tableBasic, tableFancy);
+            res = cut(tableFancy, tableBasic);
             expect(res).to.equal(fancyToBasic);
         });
     });
