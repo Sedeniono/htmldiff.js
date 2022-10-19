@@ -137,7 +137,7 @@ function isStartOfStyleTag(word) {
 function isEndOfStyleTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-var tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote)(^(?!\w)|>)/;
+var tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote|ul|ol|li)(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of a table tag. A table tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
@@ -693,7 +693,7 @@ export function findMatchingBlocks(segment) {
                 // If there's an unmatched area at the start of the segment, create a new segment
                 // from that area and throw it into the segments array to get processed.
                 if (match.segmentStartInBefore > 0 && match.segmentStartInAfter > 0) {
-                    var leftBeforeTokens = segment.beforeTokens.slice(0, match.segmentStartInBefore);
+                    var leftBeforeTokens = currSegment.beforeTokens.slice(0, match.segmentStartInBefore);
                     var leftAfterTokens = currSegment.afterTokens.slice(0, match.segmentStartInAfter);
                     segments.push(createSegment(leftBeforeTokens, leftAfterTokens, currSegment.beforeIndex, currSegment.afterIndex));
                 }

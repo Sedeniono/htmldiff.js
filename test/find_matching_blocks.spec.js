@@ -162,5 +162,121 @@ describe('findMatchingBlocks', function(){
                 expect(res[2].length).eql(1);
             });
         });
+
+        describe('HTML special case', function(){
+            beforeEach(function(){
+                const before = htmlToTokens('<div>Hello <p>foo</p> world! Hello Earth!</div>');
+                const after = htmlToTokens('<div>Hello <p>foo</p> world! <p>bar</p> baz!</div>');
+                segment = createSegment(before, after, 0, 0);
+                res = cut(segment);
+            });
+
+            it('should return 2 matches', function(){
+                expect(res.length).to.equal(2);
+            });
+
+            it('should match "<div>Hello <p>foo</p> world!"', function(){
+                expect(res[0].startInBefore).eql(0);
+                expect(res[0].startInAfter).eql(0);
+                expect(res[0].endInBefore).eql(8);
+                expect(res[0].endInAfter).eql(8);
+                expect(res[0].length).eql(9);
+            });
+
+            it('should match "</div>"', function(){
+                expect(res[1].startInBefore).eql(12);
+                expect(res[1].startInAfter).eql(14);
+                expect(res[1].endInBefore).eql(12);
+                expect(res[1].endInAfter).eql(14);
+                expect(res[1].length).eql(1);
+            });
+        });
+
+        describe('HTML special case -- reverse', function(){
+            beforeEach(function(){
+                const before = htmlToTokens('<div>Hello <p>foo</p> world! <p>bar</p> baz!</div>');
+                const after = htmlToTokens('<div>Hello <p>foo</p> world! Hello Earth!</div>');
+                segment = createSegment(before, after, 0, 0);
+                res = cut(segment);
+            });
+
+            it('should return 2 matches', function(){
+                expect(res.length).to.equal(2);
+            });
+
+            it('should match "<div>Hello <p>foo</p> world!"', function(){
+                expect(res[0].startInBefore).eql(0);
+                expect(res[0].startInAfter).eql(0);
+                expect(res[0].endInBefore).eql(8);
+                expect(res[0].endInAfter).eql(8);
+                expect(res[0].length).eql(9);
+            });
+
+            it('should match "</div>"', function(){
+                expect(res[1].startInBefore).eql(14);
+                expect(res[1].startInAfter).eql(12);
+                expect(res[1].endInBefore).eql(14);
+                expect(res[1].endInAfter).eql(12);
+                expect(res[1].length).eql(1);
+            });
+        });
+
+        describe('HTML special case with blockquote', function(){
+            beforeEach(function(){
+                const before = htmlToTokens('<div>Hello <p>foo</p> world! <blockquote>Hello Earth!</blockquote></div>');
+                const after = htmlToTokens('<div>Hello <p>foo</p> world! <p>Hello Earth!</p></div>');
+                segment = createSegment(before, after, 0, 0);
+                res = cut(segment);
+            });
+
+            it('should return 2 matches', function(){
+                expect(res.length).to.equal(2);
+            });
+
+            it('should match "<div>Hello <p>foo</p> world!"', function(){
+                expect(res[0].startInBefore).eql(0);
+                expect(res[0].startInAfter).eql(0);
+                expect(res[0].endInBefore).eql(8);
+                expect(res[0].endInAfter).eql(8);
+                expect(res[0].length).eql(9);
+            });
+
+            it('should match "</div>"', function(){
+                expect(res[1].startInBefore).eql(14);
+                expect(res[1].startInAfter).eql(14);
+                expect(res[1].endInBefore).eql(14);
+                expect(res[1].endInAfter).eql(14);
+                expect(res[1].length).eql(1);
+            });
+        });
+
+        describe('HTML special case with blockquote -- reverse', function(){
+            beforeEach(function(){
+                const before = htmlToTokens('<div>Hello <p>foo</p> world! <p>Hello Earth!</p></div>');
+                const after = htmlToTokens('<div>Hello <p>foo</p> world! <blockquote>Hello Earth!</blockquote></div>');
+                segment = createSegment(before, after, 0, 0);
+                res = cut(segment);
+            });
+
+            it('should return 2 matches', function(){
+                expect(res.length).to.equal(2);
+            });
+
+            it('should match "<div>Hello <p>foo</p> world!"', function(){
+                expect(res[0].startInBefore).eql(0);
+                expect(res[0].startInAfter).eql(0);
+                expect(res[0].endInBefore).eql(8);
+                expect(res[0].endInAfter).eql(8);
+                expect(res[0].length).eql(9);
+            });
+
+            it('should match "</div>"', function(){
+                expect(res[1].startInBefore).eql(14);
+                expect(res[1].startInAfter).eql(14);
+                expect(res[1].endInBefore).eql(14);
+                expect(res[1].endInAfter).eql(14);
+                expect(res[1].length).eql(1);
+            });
+        });
     });
 });
