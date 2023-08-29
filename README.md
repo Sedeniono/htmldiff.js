@@ -53,7 +53,10 @@ of these three parameters it will be ignored:
   not be compared - the entire tag should be treated as one token. This is useful for tags 
   where it does not make sense to insert `<ins>` and `<del>` tags. If not used, the default 
   list will be used:
-  `iframe,object,math,svg,script,video,head,style`.
+  `iframe,object,math,svg,script,video,head,style`.  
+  The tags specified here will be used as 'begin with'. So if tag 'i' is added, <i>
+  tags will be treated as atomic, as well as <img>. If you wish to exclude <img> tag
+  from the <i> one, configure it as 'i(?!mg)'
 
 
 ### Example
@@ -75,7 +78,7 @@ Result:
 ## Development
 * `npm install` to install dependencies
 * `npm run lint` to ESLint the TypeScript
-* `npm run make` to compile the TypeScript
+* `npm run build` to transpile the TypeScript to JavaScript
 * `npm run test` to run the tests
 
 ## Credits

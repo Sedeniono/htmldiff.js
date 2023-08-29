@@ -225,4 +225,16 @@ describe('Diff', function(){
     });
   });
 
+  describe('processing tags', function(){
+    it('should detect atomic tag correctly', function() {
+      res = diff(
+          'Some <abb class=" my-abb">Text</abb> within <embb class=" my-embb">custom tags</embb>',
+          'Some <abb class=" my-abb"> other Text</abb> within <embb class=" my-embb">the same tags</embb>'
+      );
+      expect(res).to.equal(
+          'Some <abb class=" my-abb"><ins data-operation-index="1"> other </ins>Text</abb> within <embb class=" my-embb"><del data-operation-index="3">custom</del><ins data-operation-index="3">the same</ins> tags</embb>'
+      );
+    });
+  });
+
 });
