@@ -81,7 +81,7 @@ function isEndOfHTMLComment(word) {
     return /-->$/.test(word);
 }
 // Added head and style (for style tags inside the body)
-var atomicTagsRegExp = /^<(iframe|object|math|svg|script|video|head|style|a)/;
+var atomicTagsRegExp = /^<(iframe|object|math|svg|script|video|head|style|a)$/;
 /**
  * Checks if the current word is the beginning of an atomic tag. An atomic tag is one whose
  * child nodes should not be compared - the entire tag should be treated as one token. This
@@ -245,7 +245,7 @@ export function htmlToTokens(html) {
         var char = html[charIdx];
         switch (mode) {
             case 'tag': {
-                var atomicTag = isStartOfAtomicTag(currentWord);
+                var atomicTag = (' ' === char || '/' === char || '>' === char) ? isStartOfAtomicTag(currentWord) : false;
                 var styleTag = isStartOfStyleTag(currentWord + char);
                 var latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
                 var endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
@@ -302,7 +302,7 @@ export function htmlToTokens(html) {
                 break;
             }
             case 'atomic_tag':
-                if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)) {
+                if (isEndOfTag(char) && (isImage(currentWord + '>') || isEndOfAtomicTag(currentWord, currentAtomicTag))) {
                     currentWord += '>';
                     words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
@@ -434,6 +434,15 @@ function getKeyForToken(token) {
         return token.replace(/(\s+|&nbsp;|&#160;)/g, ' ');
     }
     return token;
+}
+/**
+ * Checks if a given token is image
+ *
+ * @param {} token
+ * @returns
+ */
+function isImage(token) {
+    return /^<img.*src=['"]([^"']*)['"].*>$/.exec(token);
 }
 var tokenMapKey = function (token) { return token.key + JSON.stringify(token.styles) + JSON.stringify(token.tableTags); };
 /**
@@ -594,7 +603,7 @@ export function findBestMatch(segment) {
  * @return {Match} The full match.
  */
 function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f;
     var beforeTokens = segment.beforeTokens;
     var afterTokens = segment.afterTokens;
     // If we already have a match that goes to the end of the document, no need to keep looking.
@@ -613,17 +622,17 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
             return null;
         }
     }
-    // Extend the current match as far foward as it can go, without overflowing beforeTokens or
+    // Extend the current match as far forward as it can go, without overflowing beforeTokens or
     // afterTokens.
     var searching = true;
     var currentLength = 1;
     var beforeIndex = beforeStart + currentLength;
     var afterIndex = afterStart + currentLength;
     while (searching && beforeIndex < beforeTokens.length && afterIndex < afterTokens.length) {
-        var beforeWord = (_c = beforeTokens[beforeIndex]) === null || _c === void 0 ? void 0 : _c.key;
-        var afterWord = (_d = afterTokens[afterIndex]) === null || _d === void 0 ? void 0 : _d.key;
-        var beforeStyle = JSON.stringify((_e = beforeTokens[beforeIndex]) === null || _e === void 0 ? void 0 : _e.styles);
-        var afterStyle = JSON.stringify((_f = afterTokens[afterIndex]) === null || _f === void 0 ? void 0 : _f.styles);
+        var beforeWord = getTextToCompare(beforeIndex, beforeTokens);
+        var afterWord = getTextToCompare(afterIndex, afterTokens);
+        var beforeStyle = JSON.stringify((_c = beforeTokens[beforeIndex]) === null || _c === void 0 ? void 0 : _c.styles);
+        var afterStyle = JSON.stringify((_d = afterTokens[afterIndex]) === null || _d === void 0 ? void 0 : _d.styles);
         if (beforeWord === afterWord && beforeStyle === afterStyle) {
             currentLength++;
             beforeIndex = beforeStart + currentLength;
@@ -637,8 +646,8 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
     // have a whitespace token just behind the current match that was previously ignored. If so,
     // we'll expand the current match to include it.
     if (lookBehind && beforeStart > 0 && afterStart > 0) {
-        var prevBeforeKey = (_g = beforeTokens[beforeStart - 1]) === null || _g === void 0 ? void 0 : _g.key;
-        var prevAfterKey = (_h = afterTokens[afterStart - 1]) === null || _h === void 0 ? void 0 : _h.key;
+        var prevBeforeKey = (_e = beforeTokens[beforeStart - 1]) === null || _e === void 0 ? void 0 : _e.key;
+        var prevAfterKey = (_f = afterTokens[afterStart - 1]) === null || _f === void 0 ? void 0 : _f.key;
         if (prevBeforeKey === ' ' && prevAfterKey === ' ') {
             beforeStart--;
             afterStart--;
@@ -646,6 +655,14 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
         }
     }
     return makeMatch(beforeStart, afterStart, currentLength, segment);
+}
+function getTextToCompare(index, tokens) {
+    var token = tokens[index];
+    if (!token) {
+        throw Error("Expected " + tokens + " to have an element at position " + index);
+    }
+    var key = !!isStartOfAtomicTag(token.key) ? 'string' : 'key';
+    return token[key];
 }
 /**
  * Creates segment objects from the original document that can be used to restrict the area that

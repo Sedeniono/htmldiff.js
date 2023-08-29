@@ -69,7 +69,7 @@ function isEndOfHTMLComment(word: string): boolean {
 }
 
 // Added head and style (for style tags inside the body)
-const atomicTagsRegExp = /^<(iframe|object|math|svg|script|video|head|style|a)/;
+const atomicTagsRegExp = /^<(iframe|object|math|svg|script|video|head|style|a)$/;
 
 /**
  * Checks if the current word is the beginning of an atomic tag. An atomic tag is one whose
@@ -264,7 +264,7 @@ export function htmlToTokens(html: string): Token[] {
     const char = html[charIdx] as string;
     switch (mode){
       case 'tag': {
-        const atomicTag = isStartOfAtomicTag(currentWord);
+        const atomicTag = (' ' === char || '/' === char || '>' === char) ? isStartOfAtomicTag(currentWord) : false;
         const styleTag = isStartOfStyleTag(currentWord + char);
         const latestStyleTag = currentStyleTags.length && currentStyleTags[currentStyleTags.length - 1];
         const endOfStyleTag = isEndOfTag(char) && latestStyleTag && isEndOfStyleTag(currentWord, latestStyleTag);
@@ -313,7 +313,7 @@ export function htmlToTokens(html: string): Token[] {
         break;
       }
       case 'atomic_tag':
-        if (isEndOfTag(char) && isEndOfAtomicTag(currentWord, currentAtomicTag)){
+        if (isEndOfTag(char) && (isImage(currentWord + '>') || isEndOfAtomicTag(currentWord, currentAtomicTag))){
           currentWord += '>';
           words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
@@ -443,6 +443,16 @@ function getKeyForToken(token: string){
     return token.replace(/(\s+|&nbsp;|&#160;)/g, ' ');
   }
   return token;
+}
+
+/**
+ * Checks if a given token is image
+ *
+ * @param {} token
+ * @returns
+ */
+function isImage(token: string) {
+  return /^<img.*src=['"]([^"']*)['"].*>$/.exec(token);
 }
 
 const tokenMapKey = (token: Token) => token.key + JSON.stringify(token.styles) + JSON.stringify(token.tableTags);
@@ -639,7 +649,7 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
     }
   }
 
-  // Extend the current match as far foward as it can go, without overflowing beforeTokens or
+  // Extend the current match as far forward as it can go, without overflowing beforeTokens or
   // afterTokens.
   let searching = true;
   let currentLength = 1;
@@ -647,8 +657,8 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
   let afterIndex = afterStart + currentLength;
 
   while (searching && beforeIndex < beforeTokens.length && afterIndex < afterTokens.length){
-    const beforeWord = beforeTokens[beforeIndex]?.key;
-    const afterWord = afterTokens[afterIndex]?.key;
+    const beforeWord = getTextToCompare(beforeIndex, beforeTokens);
+    const afterWord = getTextToCompare(afterIndex, afterTokens);
     const beforeStyle = JSON.stringify(beforeTokens[beforeIndex]?.styles);
     const afterStyle = JSON.stringify(afterTokens[afterIndex]?.styles);
     if (beforeWord === afterWord && beforeStyle === afterStyle){
@@ -675,6 +685,16 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
 
   return makeMatch(beforeStart, afterStart, currentLength, segment);
 }
+
+function getTextToCompare(index: number, tokens: any[]): string {
+  const token = tokens[index];
+  if (!token) {
+    throw Error(`Expected ${tokens} to have an element at position ${index}`);
+  }
+  const key = !!isStartOfAtomicTag(token.key) ? 'string' : 'key';
+  return token[key];
+}
+
 type Segment = {
   beforeTokens: Token[];
   afterTokens: Token[];
