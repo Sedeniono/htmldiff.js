@@ -1,15 +1,15 @@
 {
   "name": "htmldiff",
   "description": "Diff and markup HTML with <ins> and <del> tags",
-  "version": "2.0.1",
-  "homepage": "https://github.com/pegmalibrary/htmldiff.js",
+  "version": "3.0.0",
+  "homepage": "https://github.com/Sedeniono/htmldiff.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pegmalibrary/htmldiff.js"
+    "url": "git+https://github.com/Sedeniono/htmldiff.js"
   },
   "readme": "README.md",
   "bugs": {
-    "url": "https://github.com/pegmalibrary/htmldiff.js/issues"
+    "url": "https://github.com/Sedeniono/htmldiff.js/issues"
   },
   "private": true,
   "license": "MIT",
