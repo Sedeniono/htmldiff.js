@@ -285,13 +285,13 @@ export function htmlToTokens(html: string): Token[] {
           words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
           mode = 'char';
-      } else if (endOfTableTag) {
-          currentTableTags.pop();
-          currentWord += '>';
-          words.push(createToken(currentWord, currentStyleTags, currentTableTags));
-          currentWord = '';
-          mode = 'char';
-      } else if (atomicTag){
+        } else if (endOfTableTag) {
+            currentTableTags.pop();
+            currentWord += '>';
+            words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+            currentWord = '';
+            mode = 'char';
+        } else if (atomicTag){
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
           currentWord += char;
