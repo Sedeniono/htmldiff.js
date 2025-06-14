@@ -25,7 +25,7 @@
  *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
  *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
  */
-declare type Token = {
+type Token = {
     str: string;
     key: string;
     styles: string[];
@@ -40,7 +40,7 @@ declare type Token = {
  * @return {Object} A token object with a string and key property.
  */
 export declare function createToken(currentWord: string, currentStyleTags: string[], currentTableTags: string[]): Token;
-declare type Match = {
+type Match = {
     segment: Segment;
     length: number;
     startInBefore: number;
@@ -78,7 +78,7 @@ export declare function createMap(tokens: Token[]): Record<string, number[]>;
  * @return {Match} The best match.
  */
 export declare function findBestMatch(segment: Segment): Match | undefined;
-declare type Segment = {
+type Segment = {
     beforeTokens: Token[];
     afterTokens: Token[];
     beforeMap: Record<string, number[]>;
@@ -107,7 +107,7 @@ export declare function createSegment(beforeTokens: Token[], afterTokens: Token[
  * @return {Array.<Match>} The list of matching blocks in this range.
  */
 export declare function findMatchingBlocks(segment: Segment): Match[];
-declare type Operation = {
+type Operation = {
     action: 'equal' | 'insert' | 'delete' | 'replace';
     startInBefore: number;
     endInBefore?: number;

@@ -41,10 +41,14 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from) {
-    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
-        to[j] = from[i];
-    return to;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
 };
 function isEndOfTag(char) {
     return char === '>';
@@ -200,8 +204,8 @@ export function createToken(currentWord, currentStyleTags, currentTableTags) {
     return {
         str: currentWord,
         key: getKeyForToken(currentWord),
-        styles: __spreadArray([], __read(currentStyleTags)),
-        tableTags: __spreadArray([], __read(currentTableTags)),
+        styles: __spreadArray([], __read(currentStyleTags), false),
+        tableTags: __spreadArray([], __read(currentTableTags), false),
     };
 }
 /**
@@ -394,12 +398,12 @@ function getKeyForToken(token) {
     // If the token is an image element, grab it's src attribute to include in the key.
     var img = /^<img.*src=['"]([^"']*)['"].*>$/.exec(token);
     if (img) {
-        return "<img src=\"" + img[1] + "\">";
+        return "<img src=\"".concat(img[1], "\">");
     }
     // If the token is an object element, grab it's data attribute to include in the key.
     var object = /^<object.*data=['"]([^"']*)['"]/.exec(token);
     if (object) {
-        return "<object src=\"" + object[1] + "\"></object>"; // is src supposed to be data here?
+        return "<object src=\"".concat(object[1], "\"></object>"); // is src supposed to be data here?
     }
     // Treat the entire anchor as needing to be compared
     var anchor = /^<a.*href=['"]([^"']*)['"]/.exec(token);
@@ -422,12 +426,12 @@ function getKeyForToken(token) {
     // If the token is an iframe element, grab it's src attribute to include in it's key.
     var iframe = /^<iframe.*src=['"]([^"']*)['"].*>/.exec(token);
     if (iframe) {
-        return "<iframe src=\"" + iframe[1] + "\"></iframe>";
+        return "<iframe src=\"".concat(iframe[1], "\"></iframe>");
     }
     // If the token is any other element, just grab the tag name.
     var tagName = /<([^\s>]+)[\s>]/.exec(token);
     if (tagName) {
-        return "<" + ((_a = tagName[1]) === null || _a === void 0 ? void 0 : _a.toLowerCase()) + ">";
+        return "<".concat((_a = tagName[1]) === null || _a === void 0 ? void 0 : _a.toLowerCase(), ">");
     }
     // Otherwise, the token is text, collapse the whitespace.
     if (token) {
@@ -659,7 +663,7 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
 function getTextToCompare(index, tokens) {
     var token = tokens[index];
     if (!token) {
-        throw Error("Expected " + tokens + " to have an element at position " + index);
+        throw Error("Expected ".concat(tokens, " to have an element at position ").concat(index));
     }
     var key = !!isStartOfAtomicTag(token.key) ? 'string' : 'key';
     return token[key];
@@ -900,8 +904,8 @@ function arrayDiff(a1, a2) {
                 afterArray.push(curr2);
         }
     }
-    beforeArray = __spreadArray(__spreadArray([], __read(beforeArray)), __read(a1));
-    afterArray = __spreadArray(__spreadArray([], __read(afterArray)), __read(a2));
+    beforeArray = __spreadArray(__spreadArray([], __read(beforeArray), false), __read(a1), false);
+    afterArray = __spreadArray(__spreadArray([], __read(afterArray), false), __read(a2), false);
     return ({
         before: beforeArray,
         after: afterArray,
@@ -909,24 +913,24 @@ function arrayDiff(a1, a2) {
 }
 function closeStyles(p) {
     var currentContent = p.content;
-    var styles = __spreadArray([], __read(p.styles));
+    var styles = __spreadArray([], __read(p.styles), false);
     while (styles.length) {
-        currentContent += "</" + styles.pop() + ">";
+        currentContent += "</".concat(styles.pop(), ">");
     }
     return currentContent;
 }
 function reduceTokens(tokens) {
     return closeStyles(tokens.reduce(function (acc, curr) {
         var currContent = acc.content;
-        var _a = arrayDiff(__spreadArray([], __read(acc.styles)), __spreadArray([], __read(curr.styles))), before = _a.before, after = _a.after;
+        var _a = arrayDiff(__spreadArray([], __read(acc.styles), false), __spreadArray([], __read(curr.styles), false)), before = _a.before, after = _a.after;
         before.forEach(function () {
             var tag = acc.styles.pop();
             if (tag)
-                currContent += "</" + tag + ">";
+                currContent += "</".concat(tag, ">");
         });
         after.forEach(function (tag) {
             acc.styles.push(tag);
-            currContent += "<" + tag + ">";
+            currContent += "<".concat(tag, ">");
         });
         currContent += curr.str;
         return ({ content: currContent, styles: acc.styles });
@@ -944,7 +948,7 @@ function reduceTokens(tokens) {
 function wrap(tag, content, opIndex, dataPrefix, className) {
     var wrapper = TokenWrapper(content);
     dataPrefix = dataPrefix ? dataPrefix + '-' : '';
-    var attrs = " data-" + dataPrefix + "operation-index=\"" + opIndex + "\"";
+    var attrs = " data-".concat(dataPrefix, "operation-index=\"").concat(opIndex, "\"");
     if (className) {
         attrs += ' class="' + className + '"';
     }
@@ -961,7 +965,7 @@ function wrap(tag, content, opIndex, dataPrefix, className) {
         return '';
     }, function (openingTag) {
         var dataAttrs = ' data-diff-node="' + tag + '"';
-        dataAttrs += " data-" + dataPrefix + "operation-index=\"" + opIndex + "\"";
+        dataAttrs += " data-".concat(dataPrefix, "operation-index=\"").concat(opIndex, "\"");
         return openingTag ? openingTag.replace(/>\s*$/, dataAttrs + '$&') : '';
     }, wrapper);
 }
