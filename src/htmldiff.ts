@@ -689,7 +689,7 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
 function getTextToCompare(index: number, tokens: Token[]): string {
   const token = tokens[index];
   if (!token) {
-    throw Error(`Expected ${tokens} to have an element at position ${index}`);
+    throw Error(`Expected the tokens to have an element at position ${index}`);
   }
   if (isStartOfAtomicTag(token.key)) {
     return token.str;
