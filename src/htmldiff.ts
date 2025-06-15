@@ -686,13 +686,17 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
   return makeMatch(beforeStart, afterStart, currentLength, segment);
 }
 
-function getTextToCompare(index: number, tokens: any[]): string {
+function getTextToCompare(index: number, tokens: Token[]): string {
   const token = tokens[index];
   if (!token) {
     throw Error(`Expected ${tokens} to have an element at position ${index}`);
   }
-  const key = !!isStartOfAtomicTag(token.key) ? 'string' : 'key';
-  return token[key];
+  if (isStartOfAtomicTag(token.key)) {
+    return token.str;
+  }
+  else {
+    return token.key;
+  }
 }
 
 type Segment = {

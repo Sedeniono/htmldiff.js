@@ -22,23 +22,22 @@
   ],
   "type": "module",
   "types": "dist/htmldiff.d.ts",
-  "dependencies": {},
   "devDependencies": {
+    "@eslint/js": "^9.29.0",
     "@types/chai": "^5.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.0.1",
-    "@typescript-eslint/eslint-plugin": "~8.34.0",
-    "@typescript-eslint/parser": "~8.34.0",
     "chai": "~5.2.0",
-    "eslint": "~9.29.0",
+    "eslint": "^9.29.0",
     "eslint-plugin-mocha": "^11.1.0",
     "mocha": "~11.6.0",
-    "typescript": "5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.34.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dist": "npm run lint:ci && npm run make && npm run test:ci",
-    "lint": "eslint --config='.eslintrc.cjs' './src/*.ts' --fix",
+    "lint": "eslint ./src",
     "lint:ci": "npm run lint -- --max-warnings=0",
     "test": "npm run build && mocha",
     "test:ci": "mocha -R min"

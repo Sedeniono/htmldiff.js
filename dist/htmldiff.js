@@ -665,8 +665,12 @@ function getTextToCompare(index, tokens) {
     if (!token) {
         throw Error("Expected ".concat(tokens, " to have an element at position ").concat(index));
     }
-    var key = !!isStartOfAtomicTag(token.key) ? 'string' : 'key';
-    return token[key];
+    if (isStartOfAtomicTag(token.key)) {
+        return token.str;
+    }
+    else {
+        return token.key;
+    }
 }
 /**
  * Creates segment objects from the original document that can be used to restrict the area that
