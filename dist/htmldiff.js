@@ -663,7 +663,7 @@ function getFullMatch(segment, beforeStart, afterStart, minLength, lookBehind) {
 function getTextToCompare(index, tokens) {
     var token = tokens[index];
     if (!token) {
-        throw Error("Expected ".concat(tokens, " to have an element at position ").concat(index));
+        throw Error("Expected the tokens to have an element at position ".concat(index));
     }
     if (isStartOfAtomicTag(token.key)) {
         return token.str;
@@ -813,10 +813,12 @@ export function calculateOperations(beforeTokens, afterTokens) {
         else if (op.endInBefore - op.startInBefore !== 0) {
             return false;
         }
-        return /^\s$/.test(beforeTokens.slice(op.startInBefore, op.endInBefore + 1).toString());
+        var slice = beforeTokens.slice(op.startInBefore, op.endInBefore + 1);
+        var str = slice.map(function (t) { return t.str; }).join('');
+        return /^\s$/.test(str);
     }
     operations.forEach(function (op) {
-        if ((isSingleWhitespace(op) && lastOp.action === 'replace') ||
+        if ((lastOp.action === 'replace' && isSingleWhitespace(op)) ||
             (op.action === 'replace' && lastOp.action === 'replace')) {
             // lastOp.endInBefore = op.endInBefore;
             // lastOp.endInAfter = op.endInAfter;

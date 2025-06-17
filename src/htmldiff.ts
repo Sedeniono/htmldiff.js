@@ -866,12 +866,14 @@ export function calculateOperations(beforeTokens: Token[], afterTokens: Token[])
     } else if (op.endInBefore - op.startInBefore !== 0){
       return false;
     }
-    return /^\s$/.test(beforeTokens.slice(op.startInBefore, op.endInBefore + 1).toString());
+    const slice = beforeTokens.slice(op.startInBefore, op.endInBefore + 1);
+    const str = slice.map(t => t.str).join('');
+    return /^\s$/.test(str);
   }
 
   operations.forEach(op => {
-    if ((isSingleWhitespace(op) && lastOp.action === 'replace') ||
-      (op.action === 'replace' && lastOp.action === 'replace')){
+    if ((lastOp.action === 'replace' && isSingleWhitespace(op)) ||
+        (op.action === 'replace' && lastOp.action === 'replace')){
       // lastOp.endInBefore = op.endInBefore;
       // lastOp.endInAfter = op.endInAfter;
     } else {

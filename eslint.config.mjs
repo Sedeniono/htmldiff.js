@@ -7,7 +7,7 @@ import mochaPlugin from "eslint-plugin-mocha";
 export default tseslint.config(
   eslint.configs.recommended,
   mochaPlugin.configs.recommended,
-  tseslint.configs.recommended,
+  tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
       parserOptions: {
