@@ -403,7 +403,7 @@ function getKeyForToken(token) {
     // If the token is an object element, grab it's data attribute to include in the key.
     var object = /^<object.*data=['"]([^"']*)['"]/.exec(token);
     if (object) {
-        return "<object src=\"".concat(object[1], "\"></object>"); // is src supposed to be data here?
+        return "<object data=\"".concat(object[1], "\"></object>");
     }
     // Treat the entire anchor as needing to be compared
     var anchor = /^<a.*href=['"]([^"']*)['"]/.exec(token);

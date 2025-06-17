@@ -404,7 +404,7 @@ function getKeyForToken(token: string){
   // If the token is an object element, grab it's data attribute to include in the key.
   const object = /^<object.*data=['"]([^"']*)['"]/.exec(token);
   if (object) {
-    return `<object src="${object[1]}"></object>`; // is src supposed to be data here?
+    return `<object data="${object[1]}"></object>`;
   }
 
   // Treat the entire anchor as needing to be compared
