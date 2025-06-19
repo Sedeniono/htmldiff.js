@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "downlevelIteration": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,8 +13,11 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "noUnusedParameters": false,
+    "allowUnreachableCode": false,
+    "strictNullChecks": true,
+    "noImplicitOverride": true,
     "pretty": true,
     "outDir": "./dist",
     "sourceMap": true,
