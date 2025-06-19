@@ -275,39 +275,47 @@ export function htmlToTokens(html: string): Token[] {
             currentStyleTags.push(styleTag);
             currentWord = '';
             mode = 'char';
-        } else if (endOfStyleTag) {
+        }
+        else if (endOfStyleTag) {
             currentStyleTags.pop();
             currentWord = '';
             mode = 'char';
-        } else if (tableTag) {
+        }
+        else if (tableTag) {
           currentTableTags.push(tableTag);
           currentWord += char;
           words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
           mode = 'char';
-        } else if (endOfTableTag) {
+        }
+        else if (endOfTableTag) {
             currentTableTags.pop();
             currentWord += '>';
             words.push(createToken(currentWord, currentStyleTags, currentTableTags));
             currentWord = '';
             mode = 'char';
-        } else if (atomicTag){
+        }
+        else if (atomicTag) {
           mode = 'atomic_tag';
           currentAtomicTag = atomicTag;
           currentWord += char;
-        } else if (isStartOfHTMLComment(currentWord)){
+        }
+        else if (isStartOfHTMLComment(currentWord)){
           mode = 'html_comment';
           currentWord += char;
-        } else if (isEndOfTag(char)){
+        }
+        else if (isEndOfTag(char)){
           currentWord += '>';
           words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
           if (isWhitespace(char)){
             mode = 'whitespace';
-          } else {
+          }
+          else {
             mode = 'char';
           }
-        } else {
+        }
+        else {
           currentWord += char;
         }
         break;
@@ -319,7 +327,8 @@ export function htmlToTokens(html: string): Token[] {
           currentWord = '';
           currentAtomicTag = '';
           mode = 'char';
-        } else {
+        }
+        else {
           currentWord += char;
         }
         break;
@@ -337,20 +346,24 @@ export function htmlToTokens(html: string): Token[] {
           }
           currentWord = '<';
           mode = 'tag';
-        } else if (/\s/.test(char)){
+        }
+        else if (/\s/.test(char)){
           if (currentWord){
             words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = char;
           mode = 'whitespace';
-        } else if (/[\w\d#@]/.test(char)){
+        }
+        else if (/[\w\d#@]/.test(char)){
           currentWord += char;
-        } else if (/&/.test(char)){
+        }
+        else if (/&/.test(char)){
           if (currentWord){
             words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
           currentWord = char;
-        } else {
+        }
+        else {
           currentWord += char;
           words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           currentWord = '';
@@ -363,9 +376,11 @@ export function htmlToTokens(html: string): Token[] {
           }
           currentWord = '<';
           mode = 'tag';
-        } else if (isWhitespace(char)){
+        }
+        else if (isWhitespace(char)){
           currentWord += char;
-        } else {
+        }
+        else {
           if (currentWord){
             words.push(createToken(currentWord, currentStyleTags, currentTableTags));
           }
@@ -421,7 +436,8 @@ function getKeyForToken(token: string){
       const start = token.slice(0, uuid);
       const end = token.slice(uuid + 44);
       return start + end;
-    } else {
+    }
+    else {
       return token;
     }
   }
@@ -470,7 +486,8 @@ export function createMap(tokens: Token[]): Record<string, number[]> {
     function(map: Record<string, number[]>, token: Token, index: number) {
       if (map[tokenMapKey(token)]){
         map[tokenMapKey(token)]?.push(index);
-      } else {
+      }
+      else {
         map[tokenMapKey(token)] = [index];
       }
       return map;
@@ -493,9 +510,11 @@ export function createMap(tokens: Token[]): Record<string, number[]> {
 function compareMatches(m1: Match, m2: Match): number {
   if (m2.endInBefore < m1.startInBefore && m2.endInAfter < m1.startInAfter){
     return -1;
-  } else if (m2.startInBefore > m1.endInBefore && m2.startInAfter > m1.endInAfter){
+  }
+  else if (m2.startInBefore > m1.endInBefore && m2.startInAfter > m1.endInAfter){
     return 1;
-  } else {
+  }
+  else {
     return 0;
   }
 }
@@ -515,16 +534,19 @@ function addToNode(node: TreeNode | null, match: Match): TreeNode {
         left: addToNode(node.left, match),
         right: node.right
       };
-    } else if (position === 1){
+    }
+    else if (position === 1){
       return {
         value: node.value,
         left: node.left,
         right: addToNode(node.right, match)
       };
-    } else {
+    }
+    else {
       return node;
     }
-  } else {
+  }
+  else {
     return {
       value: match,
       left: null,
@@ -665,7 +687,8 @@ function getFullMatch(segment: Segment, beforeStart: number, afterStart: number,
       currentLength++;
       beforeIndex = beforeStart + currentLength;
       afterIndex = afterStart + currentLength;
-    } else {
+    }
+    else {
       searching = false;
     }
   }
@@ -825,7 +848,8 @@ export function calculateOperations(beforeTokens: Token[], afterTokens: Token[])
       if (positionInAfter !== match.startInAfter){
         actionUpToMatchPositions = 'insert';
       }
-    } else {
+    }
+    else {
       actionUpToMatchPositions = 'delete';
       if (positionInAfter !== match.startInAfter){
         actionUpToMatchPositions = 'replace';
@@ -861,9 +885,11 @@ export function calculateOperations(beforeTokens: Token[], afterTokens: Token[])
   function isSingleWhitespace(op: Operation){
     if (op.action !== 'equal'){
       return false;
-    } else if (!op.endInBefore) {
+    }
+    else if (!op.endInBefore) {
       return false;
-    } else if (op.endInBefore - op.startInBefore !== 0){
+    }
+    else if (op.endInBefore - op.startInBefore !== 0){
       return false;
     }
     const slice = beforeTokens.slice(op.startInBefore, op.endInBefore + 1);
@@ -876,7 +902,8 @@ export function calculateOperations(beforeTokens: Token[], afterTokens: Token[])
         (op.action === 'replace' && lastOp.action === 'replace')){
       // lastOp.endInBefore = op.endInBefore;
       // lastOp.endInAfter = op.endInAfter;
-    } else {
+    }
+    else {
       postProcessed.push(op);
       lastOp = op;
     }
@@ -925,7 +952,8 @@ function TokenWrapper(tokens: Token[]): TokenNotes {
         if (lastEntry && '/' + lastEntry.tag === tag){
           data.notes[lastEntry.position]!.insertedTag = true;
           data.tagStack.pop();
-        } else {
+        }
+        else {
           data.tagStack.push({
             tag: tag,
             position: index
@@ -1057,7 +1085,8 @@ function wrap(tag: string, content: Token[], opIndex: number, dataPrefix: string
         if (val.trim()){
           return '<' + tag + attrs + '>' + val + '</' + tag + '>';
         }
-      } else {
+      }
+      else {
         return reduceTokens(segment.tokens);
       }
       return '';
