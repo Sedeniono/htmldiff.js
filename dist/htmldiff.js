@@ -339,14 +339,14 @@ export function htmlToTokens(html) {
                     currentWord = char;
                     mode = 'whitespace';
                 }
-                else if (/[\w\d#@]/.test(char)) {
-                    currentWord += char;
-                }
                 else if (/&/.test(char)) {
                     if (currentWord) {
                         words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
+                }
+                else if (/[\w\d#@]/.test(char)) {
+                    currentWord += char;
                 }
                 else {
                     currentWord += char;
