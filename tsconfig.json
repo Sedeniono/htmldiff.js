@@ -4,8 +4,8 @@
     "downlevelIteration": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "lib": ["es2015"],
-    "module": "es2015",
+    "lib": ["ES6"],
+    "module": "ES6",
     "moduleResolution": "node",
     "noEmitOnError": true,
     "noErrorTruncation": true,
@@ -22,7 +22,7 @@
     "outDir": "./dist",
     "sourceMap": true,
     "strict": true,
-    "target": "es5",
+    "target": "ES6",
     "newLine": "lf",
   }
 }
