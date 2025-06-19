@@ -237,4 +237,70 @@ describe('Diff', function(){
     });
   });
 
+  describe('punctuation', function(){
+    it('if only the punctuation changes then only the punctuation should be marked', function() {
+      res = diff(
+          'Hello world! Test',
+          'Hello world. Test'
+      );
+      expect(res).to.equal(
+          'Hello world<del data-operation-index="1">!</del><ins data-operation-index="1">.</ins> Test'
+      );
+    });
+
+    it('if the word and the punctuation changes then both should be marked', function() {
+      res = diff(
+          'Hello wrld! Test',
+          'Hello world. Test'
+      );
+      expect(res).to.equal(
+          'Hello <del data-operation-index="1">wrld!</del><ins data-operation-index="1">world.</ins> Test'
+      );
+    });
+  });
+
+  describe('non-ASCII word characters should be part of the word thanks to Intl.Segmenter', function(){
+    it('apostrophe in English word should be part of the word', function() {
+      res = diff(
+          "This dooesn't matter.",
+          "This doesn't matter."
+      );
+      expect(res).to.equal(
+          'This <del data-operation-index="1">dooesn\'t</del><ins data-operation-index="1">doesn\'t</ins> matter.'
+      );
+    });
+
+    it('underscore should be part of the word', function() {
+      res = diff(
+          "Consider some_fnction now",
+          "Consider some_function now"
+      );
+      expect(res).to.equal(
+          'Consider <del data-operation-index="1">some_fnction</del><ins data-operation-index="1">some_function</ins> now'
+      );
+    });
+
+    it('German Umlaut characters should not separate words', function() {
+      res = diff(
+          'Text möttige ÜmLLaute, noch määhr Umlaute',
+          'Text möttige Ümlaute, noch mähr Umlaute'
+      );
+      expect(res).to.equal(
+          'Text möttige <del data-operation-index="1">ÜmLLaute</del><ins data-operation-index="1">Ümlaute</ins>, noch <del data-operation-index="3">määhr</del><ins data-operation-index="3">mähr</ins> Umlaute'
+      );
+    });
+
+    // I do not speak Japanese, so this test is an educated guess via tools like DeepL and ChatGPT. The main point 
+    // is that Japanese does not use spaces to separate words. The use of Intl.Segmenter should still makes it work.
+    // Without it, the translation DeepL gives me for the parts marked as changed by the algorithm seem wrong.
+    it('should identify Japanese words', function() {
+      res = diff(
+          'リンゴは木から遠くには落ちない。それは良いことだ。',
+          'リンゴは木から遠く離れて落ちる。それは良いことだ。'
+      );
+      expect(res).to.equal(
+          'リンゴは木から遠く<del data-operation-index="1">には落ちない</del><ins data-operation-index="1">離れて落ちる</ins>。それは良いことだ。'
+      );
+    });
+  });
 });

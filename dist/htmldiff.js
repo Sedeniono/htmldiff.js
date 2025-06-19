@@ -207,6 +207,39 @@ function makeMatch(startInBefore, startInAfter, length, segment) {
     };
 }
 /**
+ * Splits a string into an array of words, taking into account locale-specific word boundaries.
+ * Note that this is different from simply splitting by whitespace, as some languages such as
+ * Japanese do not use spaces to separate words.
+ *
+ * @param str The string to split.
+ * @returns The individual words in `str`.
+ */
+function splitStringLocaleAware(str) {
+    if (Intl === null || Intl === void 0 ? void 0 : Intl.Segmenter) { // eslint-disable-line
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' }); // eslint-disable-line
+        const segments = segmenter.segment(str); // eslint-disable-line
+        const toReturn = [];
+        for (const segment of segments) {
+            toReturn.push(segment.segment); // eslint-disable-line
+        }
+        return toReturn;
+    }
+    else {
+        // Fallback for environments without Intl.Segmenter: No additional splitting.
+        // Since htmlToTokens() already splits by whitespace, it means we support only languages that split words
+        // by whitespace. (Japanese would be an example where this is not the case and which will therefore not work.)
+        return [str];
+    }
+}
+function splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags) {
+    const parts = splitStringLocaleAware(currentWord);
+    const tokens = [];
+    for (const token of parts) {
+        tokens.push(createToken(token, currentStyleTags, currentTableTags));
+    }
+    return tokens;
+}
+/**
  * Tokenizes a string of HTML.
  *
  * @param {string} html The string to tokenize.
@@ -302,30 +335,45 @@ export function htmlToTokens(html) {
             case 'char':
                 if (isStartOfTag(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                        words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = '<';
                     mode = 'tag';
                 }
                 else if (/\s/.test(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                        words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
                     mode = 'whitespace';
                 }
                 else if (/&/.test(char)) {
                     if (currentWord) {
-                        words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                        words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
                 }
-                else if (/[\w\d#@]/.test(char)) {
+                // The regex was originally [\w\d#@] which did not match e.g. 'ö' or other non-ASCII characters used as letters.
+                // -> Use "\p{L}\p{M}" instead, see e.g. https://stackoverflow.com/a/6005511/3740047
+                // The \p{M} matches marks (e.g. accents above letters).
+                // \w also matches "_" but \p{L} does not, so we include it now explicitly.
+                // Moreover, we include "'" so that words like "don't" are not split.
+                // The original code also matched numbers (via \d), so we include the more general \p{N} as well.
+                // Documentation of the \p argument: https://unicode.org/reports/tr18/#General_Category_Property
+                // Playground: https://regex101.com/r/sNbfSj/1
+                else if (/[\p{N}\p{L}\p{M}_'#@]/u.test(char)) {
                     currentWord += char;
+                }
+                // TODO: This and the inclusion of "#" in the regex above is a hack for escaped characters in html.
+                // -> Introduce a dedicated mode when we encounter "&" and then a ";".
+                else if (/;/.test(char)) {
+                    currentWord += char;
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                    currentWord = '';
                 }
                 else {
                     currentWord += char;
-                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                    words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
                     currentWord = '';
                 }
                 break;

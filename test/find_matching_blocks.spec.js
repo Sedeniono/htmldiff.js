@@ -178,17 +178,17 @@ describe('findMatchingBlocks', function(){
             it('should match "<div>Hello <p>foo</p> world!"', function(){
                 expect(res[0].startInBefore).eql(0);
                 expect(res[0].startInAfter).eql(0);
-                expect(res[0].endInBefore).eql(8);
-                expect(res[0].endInAfter).eql(8);
-                expect(res[0].length).eql(9);
+                expect(res[0].endInBefore).eql(9);
+                expect(res[0].endInAfter).eql(9);
+                expect(res[0].length).eql(10);
             });
 
-            it('should match "</div>"', function(){
-                expect(res[1].startInBefore).eql(12);
-                expect(res[1].startInAfter).eql(14);
-                expect(res[1].endInBefore).eql(12);
-                expect(res[1].endInAfter).eql(14);
-                expect(res[1].length).eql(1);
+            it('should match "!</div>"', function(){
+                expect(res[1].startInBefore).eql(13);
+                expect(res[1].startInAfter).eql(15);
+                expect(res[1].endInBefore).eql(14);
+                expect(res[1].endInAfter).eql(16);
+                expect(res[1].length).eql(2);
             });
         });
 
@@ -207,17 +207,17 @@ describe('findMatchingBlocks', function(){
             it('should match "<div>Hello <p>foo</p> world!"', function(){
                 expect(res[0].startInBefore).eql(0);
                 expect(res[0].startInAfter).eql(0);
-                expect(res[0].endInBefore).eql(8);
-                expect(res[0].endInAfter).eql(8);
-                expect(res[0].length).eql(9);
+                expect(res[0].endInBefore).eql(9);
+                expect(res[0].endInAfter).eql(9);
+                expect(res[0].length).eql(10);
             });
 
-            it('should match "</div>"', function(){
-                expect(res[1].startInBefore).eql(14);
-                expect(res[1].startInAfter).eql(12);
-                expect(res[1].endInBefore).eql(14);
-                expect(res[1].endInAfter).eql(12);
-                expect(res[1].length).eql(1);
+            it('should match "!</div>"', function(){
+                expect(res[1].startInBefore).eql(15);
+                expect(res[1].startInAfter).eql(13);
+                expect(res[1].endInBefore).eql(16);
+                expect(res[1].endInAfter).eql(14);
+                expect(res[1].length).eql(2);
             });
         });
 
@@ -236,16 +236,16 @@ describe('findMatchingBlocks', function(){
             it('should match "<div>Hello <p>foo</p> world!"', function(){
                 expect(res[0].startInBefore).eql(0);
                 expect(res[0].startInAfter).eql(0);
-                expect(res[0].endInBefore).eql(8);
-                expect(res[0].endInAfter).eql(8);
-                expect(res[0].length).eql(9);
+                expect(res[0].endInBefore).eql(9);
+                expect(res[0].endInAfter).eql(9);
+                expect(res[0].length).eql(10);
             });
 
             it('should match "</div>"', function(){
-                expect(res[1].startInBefore).eql(14);
-                expect(res[1].startInAfter).eql(14);
-                expect(res[1].endInBefore).eql(14);
-                expect(res[1].endInAfter).eql(14);
+                expect(res[1].startInBefore).eql(16);
+                expect(res[1].startInAfter).eql(16);
+                expect(res[1].endInBefore).eql(16);
+                expect(res[1].endInAfter).eql(16);
                 expect(res[1].length).eql(1);
             });
         });
@@ -265,16 +265,16 @@ describe('findMatchingBlocks', function(){
             it('should match "<div>Hello <p>foo</p> world!"', function(){
                 expect(res[0].startInBefore).eql(0);
                 expect(res[0].startInAfter).eql(0);
-                expect(res[0].endInBefore).eql(8);
-                expect(res[0].endInAfter).eql(8);
-                expect(res[0].length).eql(9);
+                expect(res[0].endInBefore).eql(9);
+                expect(res[0].endInAfter).eql(9);
+                expect(res[0].length).eql(10);
             });
 
             it('should match "</div>"', function(){
-                expect(res[1].startInBefore).eql(14);
-                expect(res[1].startInAfter).eql(14);
-                expect(res[1].endInBefore).eql(14);
-                expect(res[1].endInAfter).eql(14);
+                expect(res[1].startInBefore).eql(16);
+                expect(res[1].startInAfter).eql(16);
+                expect(res[1].endInBefore).eql(16);
+                expect(res[1].endInAfter).eql(16);
                 expect(res[1].length).eql(1);
             });
         });
