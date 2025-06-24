@@ -460,7 +460,12 @@ export function htmlToTokens(html: string): Token[] {
     }
   }
   if (currentWord){
-    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+    if (mode === 'char') {
+      words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
+    }
+    else {
+      words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+    }
   }
   return words;
 }

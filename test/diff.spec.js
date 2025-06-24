@@ -358,5 +358,15 @@ describe('Diff', function(){
           'リンゴは木から遠く<del data-operation-index="1">には落ちない</del><ins data-operation-index="1">離れて落ちる</ins>。それは良いことだ。'
       );
     });
+
+    it('If string ends with words then words should be split correctly', function() {
+      res = diff(
+          'これはリンゴだ',
+          '日本語は話せない'
+      );
+      expect(res).to.equal(
+          '<del data-operation-index="0">これ</del><ins data-operation-index="0">日本語</ins>は<del data-operation-index="2">リンゴだ</del><ins data-operation-index="2">話せない</ins>'
+      );
+    });
   });
 });
