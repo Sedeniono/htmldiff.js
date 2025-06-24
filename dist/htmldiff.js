@@ -352,6 +352,7 @@ export function htmlToTokens(html) {
                         words.push(...splitStringLocaleAwareAndCreateTokens(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = char;
+                    mode = 'escape_sequence';
                 }
                 // The regex was originally [\w\d#@] which did not match e.g. 'ö' or other non-ASCII characters used as letters.
                 // -> Use "\p{L}\p{M}" instead, see e.g. https://stackoverflow.com/a/6005511/3740047
@@ -361,15 +362,8 @@ export function htmlToTokens(html) {
                 // The original code also matched numbers (via \d), so we include the more general \p{N} as well.
                 // Documentation of the \p argument: https://unicode.org/reports/tr18/#General_Category_Property
                 // Playground: https://regex101.com/r/sNbfSj/1
-                else if (/[\p{N}\p{L}\p{M}_'#@]/u.test(char)) {
+                else if (/[\p{N}\p{L}\p{M}_'@]/u.test(char)) {
                     currentWord += char;
-                }
-                // TODO: This and the inclusion of "#" in the regex above is a hack for escaped characters in html.
-                // -> Introduce a dedicated mode when we encounter "&" and then a ";".
-                else if (/;/.test(char)) {
-                    currentWord += char;
-                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
-                    currentWord = '';
                 }
                 else {
                     currentWord += char;
@@ -393,6 +387,22 @@ export function htmlToTokens(html) {
                         words.push(createToken(currentWord, currentStyleTags, currentTableTags));
                     }
                     currentWord = '';
+                    charIdx--; // seek back
+                    mode = 'char';
+                }
+                break;
+            case 'escape_sequence':
+                if (char === ';') {
+                    currentWord += char;
+                    words.push(createToken(currentWord, currentStyleTags, currentTableTags));
+                    currentWord = '';
+                    mode = 'char';
+                }
+                else if (/[\w\d#]/.test(char)) {
+                    currentWord += char;
+                }
+                else {
+                    // Not a valid escape sequence.
                     charIdx--; // seek back
                     mode = 'char';
                 }

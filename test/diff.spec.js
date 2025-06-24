@@ -37,6 +37,62 @@ describe('Diff', function(){
     });
   });
 
+  describe('html escape sequences', function(){
+    it('inserted escape sequence should be detected', function() {
+      expect(diff(
+          'Hello world',
+          'Hello &uacute; world'))
+      .to.equal(
+          'Hello <ins data-operation-index="1">&uacute; </ins>world'
+      );
+    });
+
+    it('deleted escape sequence should be detected', function() {
+      expect(diff(
+          'Hello &#365;',
+          'Hello'))
+      .to.equal(
+          'Hello<del data-operation-index="1"> &#365;</del>'
+      );
+    });
+
+    it('double ampersand should not cause infinite loop', function() {
+      expect(diff(
+          'Hello && world',
+          'Hello && code'))
+      .to.equal(
+          'Hello && <del data-operation-index="1">world</del><ins data-operation-index="1">code</ins>'
+      );
+    });
+
+    it('should consider non-whitespace escape sequences as different', function() {
+      expect(diff(
+          'Hello&lt;&NewLine;world',
+          'Hello&#60;&amp;world'))
+      .to.equal(
+          'Hello<del data-operation-index="1">&lt;&NewLine;</del><ins data-operation-index="1">&#60;&amp;</ins>world'
+      );
+    });
+
+    it('should not throw or crash with invalid escape sequences', function() {
+      expect(diff(
+          'Hello &lt world',
+          'Hello &ö world'))
+      .to.equal(
+          'Hello &<del data-operation-index="1">lt</del><ins data-operation-index="1">ö</ins> world'
+      );
+    });
+
+    it('should consider same entity name and code referring to same symbol as different (because there is no special code to match them)', function() {
+      expect(diff(
+          'Hello &clubs; world',
+          'Hello &#9827; world'))
+      .to.equal(
+          'Hello <del data-operation-index="1">&clubs;</del><ins data-operation-index="1">&#9827;</ins> world'
+      );
+    });
+  });
+
   describe('When a class name is specified', function(){
     it('should include the class in the wrapper tags', function(){
       expect(diff('input', 'input 2', 'diff-result')).to.equal(
