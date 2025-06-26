@@ -1258,7 +1258,7 @@ export function renderOperations(beforeTokens: Token[], afterTokens: Token[], op
  * @param {string} className (Optional) The class attribute to include in <ins> and <del> tags.
  * @param {string} dataPrefix (Optional) The data prefix to use for data attributes. The
  *      operation index data attribute will be named `data-${dataPrefix-}operation-index`.
- * 
+ *
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
 export default function diff(before: string, after: string, className: string, dataPrefix: string){
