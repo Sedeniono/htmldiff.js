@@ -390,12 +390,59 @@ describe('Diff', function(){
       );
     });
 
-    it('If only part of heading content changes then only that should be marked', function() {
+    it('If only part of heading content changes then only that should be marked, while heading should not be split up', function() {
       expect(diff(
           '<h3>Hello world</h3>',
           '<h3>Hello code</h3>'))
       .to.equal(
           '<h3>Hello <del data-operation-index="1">world</del><ins data-operation-index="1">code</ins></h3>'
+      );
+    });
+  });
+
+  describe('formatting changes', function(){
+    it('If formatting changes from bold to italic then whole part should be marked', function() {
+      expect(diff(
+          '<b>Hello world</b>',
+          '<i>Hello world</i>'))
+      .to.equal(
+          '<del data-operation-index="0"><b>Hello world</b></del><ins data-operation-index="0"><i>Hello world</i></ins>'
+      );
+    });
+
+    it('If only part of formatted content changes then only that should be marked; the deleted and inserted parts should have their individual formatting', function() {
+      expect(diff(
+          '<b>Hello world</b>',
+          '<b>Hello code</b>'))
+      .to.equal(
+          '<b>Hello </b><del data-operation-index="1"><b>world</b></del><ins data-operation-index="1"><b>code</b></ins>'
+      );
+    });
+
+    it('If formatting is removed then whole part should be marked', function() {
+      expect(diff(
+          '<b>Hello world</b>',
+          'Hello world'))
+      .to.equal(
+          '<del data-operation-index="0"><b>Hello world</b></del><ins data-operation-index="0">Hello world</ins>'
+      );
+    });
+
+    it('If formatting is inserted then whole part should be marked', function() {
+      expect(diff(
+          'Hello world',
+          '<b>Hello world</b>'))
+      .to.equal(
+          '<del data-operation-index="0">Hello world</del><ins data-operation-index="0"><b>Hello world</b></ins>'
+      );
+    });
+
+    it('If formatting is replaced with paragraph then whole part should be marked', function() {
+      expect(diff(
+          '<b>Hello world</b>',
+          '<p>Hello world</p>'))
+      .to.equal(
+          '<del data-operation-index="0"><b>Hello world</b></del><p data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">Hello world</ins></p>'
       );
     });
   });
