@@ -1061,7 +1061,12 @@ function combineTokenNotes(
   }>(
     function(data: {list: WrappableTokens[], status: boolean | null, lastIndex: number}, token: Token, index: number){
       if (notes[index]?.insertedTag){
-        tokens[index] = {key: tokens[index]?.key || '', str: tagFn(tokens[index]?.str), styles: tokens[index]?.styles || [], tableTags: tokens[index]?.tableTags || []};
+        tokens[index] = {
+          key: tokens[index]?.key || '',
+          str: tagFn(tokens[index]?.str),
+          styles: tokens[index]?.styles || [],
+          tableTags: tokens[index]?.tableTags || []
+        };
       }
       if (data.status === null){
         data.status = notes[index]?.isWrappable ?? false;

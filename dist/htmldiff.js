@@ -904,7 +904,12 @@ function combineTokenNotes(mapFn, tagFn, tokenNotes) {
     const segments = tokens.reduce(function (data, token, index) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j;
         if ((_a = notes[index]) === null || _a === void 0 ? void 0 : _a.insertedTag) {
-            tokens[index] = { key: ((_b = tokens[index]) === null || _b === void 0 ? void 0 : _b.key) || '', str: tagFn((_c = tokens[index]) === null || _c === void 0 ? void 0 : _c.str), styles: ((_d = tokens[index]) === null || _d === void 0 ? void 0 : _d.styles) || [], tableTags: ((_e = tokens[index]) === null || _e === void 0 ? void 0 : _e.tableTags) || [] };
+            tokens[index] = {
+                key: ((_b = tokens[index]) === null || _b === void 0 ? void 0 : _b.key) || '',
+                str: tagFn((_c = tokens[index]) === null || _c === void 0 ? void 0 : _c.str),
+                styles: ((_d = tokens[index]) === null || _d === void 0 ? void 0 : _d.styles) || [],
+                tableTags: ((_e = tokens[index]) === null || _e === void 0 ? void 0 : _e.tableTags) || []
+            };
         }
         if (data.status === null) {
             data.status = (_g = (_f = notes[index]) === null || _f === void 0 ? void 0 : _f.isWrappable) !== null && _g !== void 0 ? _g : false;
