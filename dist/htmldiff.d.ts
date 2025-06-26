@@ -17,12 +17,10 @@
  *
  * Example usage:
  *
- *   var htmldiff = require('htmldiff.js');
- *
- *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>')
+ *   diff('<p>this is some text</p>', '<p>this is some more text</p>')
  *   == '<p>this is some <ins>more </ins>text</p>'
  *
- *   htmldiff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
+ *   diff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
  *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
  */
 type Token = {
@@ -161,9 +159,6 @@ export declare function renderOperations(beforeTokens: Token[], afterTokens: Tok
  * @param {string} className (Optional) The class attribute to include in <ins> and <del> tags.
  * @param {string} dataPrefix (Optional) The data prefix to use for data attributes. The
  *      operation index data attribute will be named `data-${dataPrefix-}operation-index`.
- * @param {string} atomicTags (Optional) Comma separated list of atomic tag names. The
- *     list has to be in the form `tag1,tag2,...` e. g. `head,script,style`. If not used,
- *     the default list `iframe,object,math,svg,script,video,head,style` will be used.
  *
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
