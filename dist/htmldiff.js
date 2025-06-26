@@ -116,7 +116,7 @@ function isStartOfStyleTag(word) {
 function isEndOfStyleTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-const tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote|ul|ol|li)(^(?!\w)|>)/;
+const tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote|ul|ol|li|h[1-6])(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of a table tag. A table tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This

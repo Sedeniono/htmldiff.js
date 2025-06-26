@@ -369,4 +369,34 @@ describe('Diff', function(){
       );
     });
   });
+
+
+  describe('headings', function(){
+    it('If heading changes to paragraph then whole heading should be marked', function() {
+      expect(diff(
+          '<h1>Hello world</h1>',
+          '<p>Hello world</p>'))
+      .to.equal(
+          '<h1 data-diff-node="del" data-operation-index="0"><del data-operation-index="0">Hello world</del></h1><p data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">Hello world</ins></p>'
+      );
+    });
+
+    it('If heading level changes then whole heading should be marked', function() {
+      expect(diff(
+          '<h1>Hello world</h1>',
+          '<h6>Hello world</h6>'))
+      .to.equal(
+          '<h1 data-diff-node="del" data-operation-index="0"><del data-operation-index="0">Hello world</del></h1><h6 data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">Hello world</ins></h6>'
+      );
+    });
+
+    it('If only part of heading content changes then only that should be marked', function() {
+      expect(diff(
+          '<h3>Hello world</h3>',
+          '<h3>Hello code</h3>'))
+      .to.equal(
+          '<h3>Hello <del data-operation-index="1">world</del><ins data-operation-index="1">code</ins></h3>'
+      );
+    });
+  });
 });
