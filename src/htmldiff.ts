@@ -1144,7 +1144,12 @@ function reduceTokens(tokens: Token[]) {
  * @param {string} dataPrefix (Optional) The prefix to use in data attributes.
  * @param {string} className (Optional) The class name to include in the wrapper tag.
  */
-function wrap(tag: string, content: Token[], opIndex: number, dataPrefix: string, className: string){
+function wrap(
+    tag: string,
+    content: Token[],
+    opIndex: number,
+    dataPrefix?: string,
+    className?: string) {
   const wrapper: TokenNotes = TokenWrapper(content);
   dataPrefix = dataPrefix ? dataPrefix + '-' : '';
   let attrs = ` data-${dataPrefix}operation-index="${opIndex}"`;
@@ -1196,28 +1201,34 @@ function wrap(tag: string, content: Token[], opIndex: number, dataPrefix: string
  * @return {string} The rendering of that operation.
  */
 const OPS: {
-  [K in 'equal' | 'insert' | 'delete' | 'replace'] : (op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string) => string
+  [K in 'equal' | 'insert' | 'delete' | 'replace'] : (
+    op: Operation,
+    beforeTokens: Token[],
+    afterTokens: Token[],
+    opIndex: number,
+    dataPrefix?: string,
+    className?: string) => string
 } = {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  'equal': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
+  'equal': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix?: string, className?: string){
     const tokens = op.endInAfter ?
       afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
       afterTokens.slice(op.startInAfter, 1);
     return reduceTokens(tokens);
   },
-  'insert': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
+  'insert': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix?: string, className?: string){
     const tokens = op.endInAfter ?
       afterTokens.slice(op.startInAfter, op.endInAfter + 1) :
       afterTokens.slice(op.startInAfter, 1);
     return wrap('ins', tokens, opIndex, dataPrefix, className);
   },
-  'delete': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
+  'delete': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix?: string, className?: string){
     const tokens = op.endInBefore ?
       beforeTokens.slice(op.startInBefore, op.endInBefore + 1) :
       beforeTokens.slice(op.startInBefore, 1);
     return wrap('del', tokens, opIndex, dataPrefix, className);
   },
-  'replace': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix: string, className: string){
+  'replace': function(op: Operation, beforeTokens: Token[], afterTokens: Token[], opIndex: number, dataPrefix?: string, className?: string){
     return OPS.delete.apply(null, [op, beforeTokens, afterTokens, opIndex, dataPrefix, className])
       + OPS.insert.apply(null, [op, beforeTokens, afterTokens, opIndex, dataPrefix, className]);
   }
@@ -1242,7 +1253,12 @@ const OPS: {
  *
  * @return {string} The rendering of the list of operations.
  */
-export function renderOperations(beforeTokens: Token[], afterTokens: Token[], operations: Operation[], dataPrefix: string, className: string){
+export function renderOperations(
+    beforeTokens: Token[],
+    afterTokens: Token[],
+    operations: Operation[],
+    dataPrefix?: string,
+    className?: string) {
   return operations.reduce(function(rendering: string, op: Operation, index: number){
     return rendering + OPS[op.action](
       op, beforeTokens, afterTokens, index, dataPrefix, className);
@@ -1261,8 +1277,14 @@ export function renderOperations(beforeTokens: Token[], afterTokens: Token[], op
  *
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
-export default function diff(before: string, after: string, className: string, dataPrefix: string){
-  if (before === after) return before;
+export default function diff(
+    before: string,
+    after: string,
+    className?: string,
+    dataPrefix?: string) {
+  if (before === after) {
+    return before;
+  }
   const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
   const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
   const ops = calculateOperations(beforeTokens, afterTokens);

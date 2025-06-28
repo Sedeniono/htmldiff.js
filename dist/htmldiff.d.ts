@@ -149,7 +149,7 @@ export declare function calculateOperations(beforeTokens: Token[], afterTokens: 
  *
  * @return {string} The rendering of the list of operations.
  */
-export declare function renderOperations(beforeTokens: Token[], afterTokens: Token[], operations: Operation[], dataPrefix: string, className: string): string;
+export declare function renderOperations(beforeTokens: Token[], afterTokens: Token[], operations: Operation[], dataPrefix?: string, className?: string): string;
 /**
  * Compares two pieces of HTML content and returns the combined content with differences
  * wrapped in <ins> and <del> tags.
@@ -162,5 +162,5 @@ export declare function renderOperations(beforeTokens: Token[], afterTokens: Tok
  *
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
-export default function diff(before: string, after: string, className: string, dataPrefix: string): string;
+export default function diff(before: string, after: string, className?: string, dataPrefix?: string): string;
 export {};

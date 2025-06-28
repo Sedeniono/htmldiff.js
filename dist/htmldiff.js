@@ -1093,8 +1093,9 @@ export function renderOperations(beforeTokens, afterTokens, operations, dataPref
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
 export default function diff(before, after, className, dataPrefix) {
-    if (before === after)
+    if (before === after) {
         return before;
+    }
     const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
     const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
     const ops = calculateOperations(beforeTokens, afterTokens);
