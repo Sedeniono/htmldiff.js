@@ -15,8 +15,7 @@ tags or tag hierarchies.
 
 The exports can be found in [`dist/htmldiff.d.ts`](https://github.com/Sedeniono/htmldiff.js/blob/master/dist/htmldiff.d.ts).
 
-### `diff` function
-
+The main exported function is:
 ```TS
 function diff(before: string, after: string, className?: string, dataPrefix?: string);
 ```
@@ -36,8 +35,12 @@ of these parameters it will be ignored:
   the default attribute name `data-operation-index` will be added on every inserted 
   `<ins>` and `<del>` tag. The value of this attribute is an auto incremented counter. 
 
+Note that for better support of languages that do not use spaces between words (e.g. Japanese),
+the code relies on the [`Intl.Segmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter) API, which is available in all major browsers since 2024.
+If it is not available, the library falls back to separating words only by whitespace.
 
-### Example
+
+## Example
 
 TypeScript:
 
