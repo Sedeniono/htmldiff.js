@@ -18,7 +18,7 @@ The exports can be found in [`dist/htmldiff.d.ts`](https://github.com/Sedeniono/
 ### `diff` function
 
 ```TS
-function diff(before: string, after: string, className: string, dataPrefix: string);
+function diff(before: string, after: string, className?: string, dataPrefix?: string);
 ```
 
 Parameters:
