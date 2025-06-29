@@ -1093,6 +1093,15 @@ export function renderOperations(beforeTokens, afterTokens, operations, dataPref
  * @return {string} The combined HTML content with differences wrapped in <ins> and <del> tags.
  */
 export default function diff(before, after, className, dataPrefix) {
+    if (!before && !after) {
+        return '';
+    }
+    if (!before) {
+        return wrap('ins', htmlToTokens(after), 0, dataPrefix, className);
+    }
+    if (!after) {
+        return wrap('del', htmlToTokens(before), 0, dataPrefix, className);
+    }
     if (before === after) {
         return before;
     }

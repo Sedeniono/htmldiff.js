@@ -1282,6 +1282,15 @@ export default function diff(
     after: string,
     className?: string,
     dataPrefix?: string) {
+  if (!before && !after) {
+    return '';
+  }
+  if (!before) {
+    return wrap('ins', htmlToTokens(after), 0, dataPrefix, className);
+  }
+  if (!after) {
+    return wrap('del', htmlToTokens(before), 0, dataPrefix, className);
+  }
   if (before === after) {
     return before;
   }
