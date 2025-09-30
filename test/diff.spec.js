@@ -446,4 +446,24 @@ describe('Diff', function(){
       );
     });
   });
+
+describe('void elements', function(){
+    it('Line break should remain valid', function() {
+      expect(diff(
+          'Hello world<br>Another line',
+          'Hello test world<br>Another line'))
+      .to.equal(
+          'Hello<ins data-operation-index="1"> test</ins> world<br>Another line'
+      );
+    });
+
+    it('Horizontal rule should remain valid', function() {
+      expect(diff(
+          'Hello world<hr>Another line',
+          'Hello test world<hr>Another line'))
+      .to.equal(
+          'Hello<ins data-operation-index="1"> test</ins> world<hr>Another line'
+      );
+    });
+  });
 });

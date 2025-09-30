@@ -105,7 +105,7 @@ const fancyEditDiff = `<table>
 <tbody>
 <tr>
 <td><p>a</p><p>aa</p></td>
-<td>b<br></br>bb</td>
+<td>b<br>bb</td>
 </tr>
 <tr>
 <td><ul><li>c</li><li>cc</li></ul></td>
@@ -124,7 +124,7 @@ const basicToFancy = `<table>
 <tbody>
 <tr>
 <td><p>a</p><p data-diff-node="ins" data-operation-index="3"><ins data-operation-index="3">aa</ins></p></td>
-<td>b<br data-diff-node="ins" data-operation-index="5"></br><ins data-operation-index="5">bb</ins></td>
+<td>b<br data-diff-node="ins" data-operation-index="5"><ins data-operation-index="5">bb</ins></td>
 </tr>
 <tr>
 <td><del data-operation-index="7">c</del><ul data-diff-node="ins" data-operation-index="7"><li data-diff-node="ins" data-operation-index="7"><ins data-operation-index="7">c</ins></li><li data-diff-node="ins" data-operation-index="7"><ins data-operation-index="7">cc</ins></li></ul></td>
@@ -143,7 +143,7 @@ const fancyToBasic = `<table>
 <tbody>
 <tr>
 <td><p>a</p><p data-diff-node="del" data-operation-index="3"><del data-operation-index="3">aa</del></p></td>
-<td>b<br data-diff-node="del" data-operation-index="5"></br><del data-operation-index="5">bb</del></td>
+<td>b<br data-diff-node="del" data-operation-index="5"><del data-operation-index="5">bb</del></td>
 </tr>
 <tr>
 <td><ul data-diff-node="del" data-operation-index="7"><li data-diff-node="del" data-operation-index="7"><del data-operation-index="7">c</del></li><li data-diff-node="del" data-operation-index="7"><del data-operation-index="7">cc</del></li></ul><ins data-operation-index="7">c</ins></td>
@@ -249,7 +249,7 @@ describe('Pain Games', function(){
                     '<tbody data-diff-node="ins" data-operation-index="0">' +
                         '<tr data-diff-node="ins" data-operation-index="0">' +
                             '<td data-diff-node="ins" data-operation-index="0"><p data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">a</ins></p><p data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">aa</ins></p></td>' +
-                            '<td data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">b</ins><br data-diff-node="ins" data-operation-index="0"></br><ins data-operation-index="0">bb</ins></td>' +
+                            '<td data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">b</ins><br data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">bb</ins></td>' +
                         '</tr>' +
                         '<tr data-diff-node="ins" data-operation-index="0">' +
                             '<td data-diff-node="ins" data-operation-index="0"><ul data-diff-node="ins" data-operation-index="0"><li data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">c</ins></li><li data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">cc</ins></li></ul></td>' +

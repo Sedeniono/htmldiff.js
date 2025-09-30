@@ -1108,6 +1108,7 @@ export default function diff(before, after, className, dataPrefix) {
     const beforeTokens = htmlToTokens(before.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
     const afterTokens = htmlToTokens(after.replace(/<br>/g, '<br></br>').replace(/<\s*hr([^>]*)>/, '<hr$1></hr>'));
     const ops = calculateOperations(beforeTokens, afterTokens);
-    return renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
+    const result = renderOperations(beforeTokens, afterTokens, ops, dataPrefix, className);
+    return result.replace(/<\/br>/g, '').replace(/<\/hr>/g, '');
 }
 //# sourceMappingURL=htmldiff.js.map
