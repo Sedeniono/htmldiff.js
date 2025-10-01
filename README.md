@@ -11,6 +11,17 @@ instead it will insert the appropriate tags for changed/added/deleted text nodes
 tags or tag hierarchies.
 
 
+## Installation
+
+If you use npm, you can add a dependency to your `package.json` like this:
+```json
+"dependencies": {
+  "htmldiff": "github:Sedeniono/htmldiff.js#v3.0.0"
+},
+```
+Replace the version tag with the desired git tag or a SHA.
+
+
 ## API
 
 The exports can be found in [`dist/htmldiff.d.ts`](https://github.com/Sedeniono/htmldiff.js/blob/master/dist/htmldiff.d.ts).
