@@ -86,7 +86,7 @@ function isStartOfAtomicTag(word) {
 function isEndOfAtomicTag(word, tag) {
     return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
-const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
+const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|span|nobr)(\s+[^>]*)?(^(?!\w)|>)/;
 /**
  * Checks if the current word is the beginning of a style tag. A style tag is one whose
  * child nodes should be compared, but the entire tag should be treated as one token. This
@@ -98,21 +98,28 @@ const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|nobr)(^(?!
  *    null otherwise
  */
 function isStartOfStyleTag(word) {
+    var _a;
     const result = styleTagsRegExp.exec(word);
-    return result && result[1];
+    if (result && result[1]) {
+        return {
+            tag: result[1],
+            tagWithAttributes: result[1] + ((_a = result[2]) !== null && _a !== void 0 ? _a : ''),
+        };
+    }
+    return null;
 }
 /**
  * Checks if the current word is the end of a style tag (i.e. it has all the characters,
  * except for the end bracket of the closing tag, such as '<strong></strong').
  *
  * @param {string} word The characters of the current token read so far.
- * @param {string} tag The ending tag to look for.
+ * @param {Style} tag The ending tag to look for.
  *
  * @return {boolean} True if the word is now a complete token (including the end tag),
  *    false otherwise.
  */
 function isEndOfStyleTag(word, tag) {
-    return word.substring(word.length - tag.length - 2) === ('</' + tag);
+    return word.substring(word.length - tag.tag.length - 2) === ('</' + tag.tag);
 }
 const tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote|ul|ol|li|h[1-6])(^(?!\w)|>)/;
 /**
@@ -954,10 +961,11 @@ function arrayDiff(a1, a2) {
     });
 }
 function closeStyles(p) {
+    var _a;
     let currentContent = p.content;
     const styles = [...p.styles];
     while (styles.length) {
-        currentContent += `</${styles.pop()}>`;
+        currentContent += `</${(_a = styles.pop()) === null || _a === void 0 ? void 0 : _a.tag}>`;
     }
     return currentContent;
 }
@@ -967,12 +975,13 @@ function reduceTokens(tokens) {
         const { before, after } = arrayDiff([...acc.styles], [...curr.styles]);
         before.forEach(() => {
             const tag = acc.styles.pop();
-            if (tag)
-                currContent += `</${tag}>`;
+            if (tag) {
+                currContent += `</${tag.tag}>`;
+            }
         });
         after.forEach((tag) => {
             acc.styles.push(tag);
-            currContent += `<${tag}>`;
+            currContent += `<${tag.tagWithAttributes}>`;
         });
         currContent += curr.str;
         return ({ content: currContent, styles: acc.styles });

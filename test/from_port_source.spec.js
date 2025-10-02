@@ -247,7 +247,7 @@ describe('The specs from the ruby source project', function(){
           '<span>النص في العلامة</span>',
           '<span>النص الجديد في العلامة</span>'
         )).to.equal(
-          '<span>النص<ins data-operation-index="1"> الجديد</ins> في العلامة</span>'
+          '<span>النص</span><ins data-operation-index="1"><span> الجديد</span></ins><span> في العلامة</span>'
         );
       });
 

@@ -98,7 +98,12 @@ function isEndOfAtomicTag(word: string, tag: string){
   return word.substring(word.length - tag.length - 2) === ('</' + tag);
 }
 
-const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|nobr)(^(?!\w)|>)/;
+const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|span|nobr)(\s+[^>]*)?(^(?!\w)|>)/;
+
+type Style = {
+  tag: string; // The raw tag, e.g. 'span'
+  tagWithAttributes: string; // E.g. 'span style="font-weight:400"'
+};
 
 /**
  * Checks if the current word is the beginning of a style tag. A style tag is one whose
@@ -110,10 +115,15 @@ const styleTagsRegExp = /^<(strong|em|b|i|q|cite|mark|dfn|sup|sub|u|s|nobr)(^(?!
  * @return {string|null} The name of the atomic tag if the word will be an atomic tag,
  *    null otherwise
  */
-
-function isStartOfStyleTag(word: string) {
+function isStartOfStyleTag(word: string) : Style | null {
     const result = styleTagsRegExp.exec(word);
-    return result && result[1];
+    if (result && result[1]) {
+      return {
+        tag: result[1],
+        tagWithAttributes: result[1] + (result[2] ?? ''),
+      };
+    }
+    return null;
 }
 
 /**
@@ -121,13 +131,13 @@ function isStartOfStyleTag(word: string) {
  * except for the end bracket of the closing tag, such as '<strong></strong').
  *
  * @param {string} word The characters of the current token read so far.
- * @param {string} tag The ending tag to look for.
+ * @param {Style} tag The ending tag to look for.
  *
  * @return {boolean} True if the word is now a complete token (including the end tag),
  *    false otherwise.
  */
-function isEndOfStyleTag(word: string, tag: string) {
-    return word.substring(word.length - tag.length - 2) === ('</' + tag);
+function isEndOfStyleTag(word: string, tag: Style) {
+    return word.substring(word.length - tag.tag.length - 2) === ('</' + tag.tag);
 }
 
 const tableTagsRegExp = /^<(table|tbody|thead|tr|th|td|blockquote|ul|ol|li|h[1-6])(^(?!\w)|>)/;
@@ -186,7 +196,7 @@ function isWrappable(token: string): boolean {
 type Token = {
   str: string;
   key: string;
-  styles: string[];
+  styles: Style[];
   tableTags: string[];
 };
 
@@ -198,7 +208,7 @@ type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export function createToken(currentWord: string, currentStyleTags: string[], currentTableTags: string[]): Token {
+export function createToken(currentWord: string, currentStyleTags: Style[], currentTableTags: string[]): Token {
   return {
     str: currentWord,
     key: getKeyForToken(currentWord),
@@ -272,7 +282,7 @@ function splitStringLocaleAware(str: string): string[] {
 }
 
 
-function splitStringLocaleAwareAndCreateTokens(currentWord: string, currentStyleTags: string[], currentTableTags: string[]) : Token[] {
+function splitStringLocaleAwareAndCreateTokens(currentWord: string, currentStyleTags: Style[], currentTableTags: string[]) : Token[] {
   const parts = splitStringLocaleAware(currentWord);
   const tokens: Token[] = [];
   for (const token of parts) {
@@ -295,7 +305,7 @@ export function htmlToTokens(html: string): Token[] {
   let mode: ParseMode = 'char';
   let currentWord = '';
   let currentAtomicTag = '';
-  const currentStyleTags: string[] = [];
+  const currentStyleTags: Style[] = [];
   const currentTableTags: string[] = [];
   const words: Token[] = [];
 
@@ -1090,9 +1100,9 @@ function combineTokenNotes(
   return segments.map(mapFn).join('');
 }
 
-function arrayDiff(a1: string[], a2: string[]) {
-  let beforeArray: string[] = [];
-  let afterArray: string[] = [];
+function arrayDiff(a1: Style[], a2: Style[]) {
+  let beforeArray: Style[] = [];
+  let afterArray: Style[] = [];
   let isDiff = false;
   while (a1.length && a2.length) {
       const curr1 = a1.shift();
@@ -1111,24 +1121,28 @@ function arrayDiff(a1: string[], a2: string[]) {
   });
 }
 
-function closeStyles(p: { content: string, styles: string[] }) {
+function closeStyles(p: { content: string, styles: Style[] }) {
   let currentContent = p.content;
   const styles = [...p.styles];
-  while (styles.length) { currentContent += `</${styles.pop()}>`;}
+  while (styles.length) {
+    currentContent += `</${styles.pop()?.tag}>`;
+  }
   return currentContent;
 }
 
 function reduceTokens(tokens: Token[]) {
-  return closeStyles(tokens.reduce((acc: { content: string, styles: string[] }, curr: Token) => {
+  return closeStyles(tokens.reduce((acc: { content: string, styles: Style[] }, curr: Token) => {
       let currContent = acc.content;
       const { before, after } = arrayDiff([...acc.styles], [...curr.styles]);
       before.forEach(() => {
           const tag = acc.styles.pop();
-          if (tag) currContent += `</${tag}>`;
+          if (tag) {
+            currContent += `</${tag.tag}>`;
+          }
       });
-      after.forEach((tag: string) => {
+      after.forEach((tag: Style) => {
           acc.styles.push(tag);
-          currContent += `<${tag}>`;
+          currContent += `<${tag.tagWithAttributes}>`;
       });
       currContent += curr.str;
       return ({ content: currContent, styles: acc.styles });

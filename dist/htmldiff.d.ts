@@ -23,10 +23,14 @@
  *   diff('<p>this is some text</p>', '<p>this is some more text</p>', 'diff-class')
  *   == '<p>this is some <ins class="diff-class">more </ins>text</p>'
  */
+type Style = {
+    tag: string;
+    tagWithAttributes: string;
+};
 type Token = {
     str: string;
     key: string;
-    styles: string[];
+    styles: Style[];
     tableTags: string[];
 };
 /**
@@ -37,7 +41,7 @@ type Token = {
  *
  * @return {Object} A token object with a string and key property.
  */
-export declare function createToken(currentWord: string, currentStyleTags: string[], currentTableTags: string[]): Token;
+export declare function createToken(currentWord: string, currentStyleTags: Style[], currentTableTags: string[]): Token;
 type Match = {
     segment: Segment;
     length: number;

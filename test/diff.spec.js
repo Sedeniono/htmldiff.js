@@ -445,6 +445,51 @@ describe('Diff', function(){
           '<del data-operation-index="0"><b>Hello world</b></del><p data-diff-node="ins" data-operation-index="0"><ins data-operation-index="0">Hello world</ins></p>'
       );
     });
+
+    it('If span is used for formatting, then the style should be preserved (empty original)', function() {
+      expect(diff(
+          '',
+          '<b><span style=\"text-decoration: overline\">TEST</span></b>'))
+      .to.equal(
+          '<ins data-operation-index="0"><b><span style="text-decoration: overline">TEST</span></b></ins>'
+      );
+    });
+
+    it('If span is used for formatting, then the style should be preserved (non-empty original)', function() {
+      expect(diff(
+          'Foo',
+          'Foo <b><span style=\"text-decoration: overline\">TEST</span></b>'))
+      .to.equal(
+          'Foo<ins data-operation-index="1"> <b><span style="text-decoration: overline">TEST</span></b></ins>'
+      );
+    });
+
+    it('If span with no style is used, then span should not be split', function() {
+      expect(diff(
+          'Foo',
+          'Foo <b><span>TEST</span></b>'))
+      .to.equal(
+          'Foo<ins data-operation-index="1"> <b><span>TEST</span></b></ins>'
+      );
+    });
+
+    it('If only part of span formatted content changes then only that should be marked; the deleted and inserted parts should have their individual formatting', function() {
+      expect(diff(
+          '<span style=\"text-decoration: overline\">Hello world</span>',
+          '<span style=\"text-decoration: overline\">Hello code</span>'))
+      .to.equal(
+          '<span style="text-decoration: overline">Hello </span><del data-operation-index="1"><span style="text-decoration: overline">world</span></del><ins data-operation-index="1"><span style="text-decoration: overline">code</span></ins>'
+      );
+    });
+
+    it('If only style in span changes, then whole span should be marked', function() {
+      expect(diff(
+          '<span style=\"text-decoration: overline\">Hello world</span>',
+          '<span style=\"text-decoration: green wavy overline\">Hello world</span>'))
+      .to.equal(
+          '<del data-operation-index="0"><span style="text-decoration: overline">Hello world</span></del><ins data-operation-index="0"><span style="text-decoration: green wavy overline">Hello world</span></ins>'
+      );
+    });
   });
 
 describe('void elements', function(){
